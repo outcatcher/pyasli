@@ -6,6 +6,9 @@ from typing import Dict, Type
 import wrapt
 from selenium.webdriver import Chrome, ChromeOptions, Firefox, FirefoxOptions, Ie, IeOptions, Remote
 
+from pyasli.elements import CssSelectorOrBy, Element, ElementCollection, SearchableWithElements
+from pyasli.searchable import Wrapped
+
 _BROWSER_MAPPING: Dict[str, Type[Remote]] = {
     "chrome": Chrome,
     "ie": Ie,
@@ -30,7 +33,7 @@ def requires_browser(wrapped, instance: BrowserSession = None, args=(), kwargs=N
     return wrapped(args, kwargs)
 
 
-class BrowserSession:
+class BrowserSession(SearchableWithElements):
     """Class containing single webdriver instance and all browser operations"""
 
     _web_driver: Remote = None
@@ -42,8 +45,13 @@ class BrowserSession:
         """Init new browser session.
         Arguments for creating webdriver instance other than ``options`` should be passed to kwargs
         """
+        super().__init__(None)
+        self.__cached__ = browser
         self.configure_browser(browser, remote, options, **kwargs)
         atexit.register(self.close_all_windows)
+
+    def _search(self) -> Wrapped:
+        return self.__cached__
 
     def configure_browser(self, browser="chrome", remote=False, options=None, **kwargs):
         """Configure browser for session"""
@@ -65,19 +73,27 @@ class BrowserSession:
         """Open given URL"""
         self._web_driver.get(url)
 
+    @requires_browser
+    def element(self, css_or_locator: CssSelectorOrBy) -> Element:
+        """Find single element by locator (css selector by default)"""
+        return super().element(css_or_locator)
+
+    @requires_browser
+    def elements(self, css_or_locator: CssSelectorOrBy) -> ElementCollection:
+        """Find single element by locator (css selector by default)"""
+        return super().elements(css_or_locator)
+
+    @requires_browser
+    def add_cookie(self, cookie_dict: dict):
+        """Add cookies to cookie storage"""
+        self._web_driver.add_cookie(cookie_dict)
+
+    @requires_browser
+    def close_window(self):
+        """Close current browser window"""
+        self._web_driver.close()
+
+    @requires_browser
     def close_all_windows(self):
         """Close all browser windows"""
         self._web_driver.quit()
-
-
-shared = BrowserSession()
-
-
-def set_browser(browser: str):
-    """Set shared session browser"""
-    shared.configure_browser(browser=browser)
-
-
-def set_options(options):
-    """Set shared session options"""
-    shared.configure_browser(options=options)
