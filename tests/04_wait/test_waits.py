@@ -30,7 +30,6 @@ def cleanup():
     if not os.path.exists(lgs):
         return
     shutil.rmtree(lgs)
-    assert not os.listdir(lgs)
 
 
 def test_negative_wait_screenshot(browser, cleanup):
@@ -41,4 +40,3 @@ def test_negative_wait_screenshot(browser, cleanup):
     for roots, dirs, files in os.walk("./logs"):
         assert len(files) == 1
         assert files[0].endswith(".png")
-
