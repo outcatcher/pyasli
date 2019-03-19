@@ -1,4 +1,4 @@
-"""Locator converter"""
+"""Locator techniques"""
 from typing import Tuple, Union
 
 from selenium.webdriver.common.by import By
