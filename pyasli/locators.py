@@ -37,7 +37,8 @@ class LocatorStrategy(ABC):
         """"Run locator and return object"""
 
     @abstractmethod
-    def __repr__(self) -> str: ...
+    def __repr__(self) -> str:
+        ...
 
 
 class MultipleElementLocator(LocatorStrategy):

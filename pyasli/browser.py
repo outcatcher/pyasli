@@ -111,14 +111,14 @@ class BrowserSession(Searchable):
         self.get_actual().get(url)
 
     @_check_browser
-    def element(self, css_or_locator: CssSelectorOrBy) -> Element:
+    def element(self, by: CssSelectorOrBy) -> Element:
         """Find single element by locator (css selector by default)"""
-        return super().element(css_or_locator)
+        return super().element(by)
 
     @_check_browser
-    def elements(self, css_or_locator: CssSelectorOrBy) -> ElementCollection:
+    def elements(self, by: CssSelectorOrBy) -> ElementCollection:
         """Find single element by locator (css selector by default)"""
-        return super().elements(css_or_locator)
+        return super().elements(by)
 
     @_check_browser
     def add_cookie(self, cookie_dict: dict):

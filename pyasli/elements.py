@@ -72,9 +72,6 @@ class Element(Searchable):
         self.should_be = Assure(self, AssertionError)
         self.should = self.should_be
 
-    def _search(self) -> WebElement:
-        return super()._search()
-
     def _element_is_dead(self):
         try:
             _ = self.__cached__.location
@@ -82,7 +79,7 @@ class Element(Searchable):
         except WebDriverException:
             return True
 
-    def get_actual(self):
+    def get_actual(self) -> WebElement:
         """Get element, check if it's cached or already dead"""
         if (self.__cached__ is None) or self._element_is_dead():
             self.__cached__ = self._search()
@@ -128,7 +125,7 @@ class Element(Searchable):
         return f"Element by: {repr(self.locator)}"
 
 
-class ElementCollection(Searchable, Sequence):
+class ElementCollection(Searchable, Sequence):  # pylint: disable=inherit-non-class
     """Collection of lazy elements"""
 
     locator: MultipleElementLocator
