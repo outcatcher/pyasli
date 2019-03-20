@@ -14,7 +14,7 @@ from webdriver_manager.firefox import GeckoDriverManager
 from webdriver_manager.microsoft import IEDriverManager
 
 from pyasli.bys import CssSelectorOrBy
-from pyasli.elements import Element, ElementCollection, Searchable, Wrapped
+from pyasli.elements import BROWSER, Element, ElementCollection, Searchable, Wrapped
 
 _BROWSER_MAPPING: Dict[str, Type[Remote]] = {
     "chrome": Chrome,
@@ -63,7 +63,7 @@ class BrowserSession(Searchable):
         Arguments for creating webdriver instance other than ``options`` should be passed to kwargs
         """
         # noinspection PyTypeChecker
-        super().__init__("Browser")
+        super().__init__(BROWSER)
         self.configure_browser(browser, remote, headless, options, **kwargs)
         atexit.register(self.close_all_windows)
 

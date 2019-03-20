@@ -23,6 +23,8 @@ def _css_to_by(by: CssSelectorOrBy) -> ByLocator:
 
 Wrapped = Union[WebElement, List[WebElement], Remote]
 
+BROWSER = "Browser"
+
 
 class Searchable(ABC):
     """Implemented `element` and `elements` methods"""
@@ -51,6 +53,14 @@ class Searchable(ABC):
     def _search(self) -> Wrapped:
         return self.locator.get()
 
+    @property
+    def browser(self):
+        """Return used browser instance"""
+        parent_locator = self.locator
+        while parent_locator.context.locator != BROWSER:
+            parent_locator = parent_locator.context.locator
+        return parent_locator.context
+
 
 class Element(Searchable):
     """Single lazy element"""
@@ -61,14 +71,6 @@ class Element(Searchable):
         self.assure = Assure(self)
         self.should_be = Assure(self, AssertionError)
         self.should = self.should_be
-
-    @property
-    def browser(self):
-        """Return used browser instance"""
-        parent_locator = self.locator
-        while parent_locator.context.locator != "Browser":
-            parent_locator = parent_locator.context.locator
-        return parent_locator.context
 
     def _search(self) -> WebElement:
         return super()._search()
@@ -129,13 +131,15 @@ class Element(Searchable):
 class ElementCollection(Searchable, Sequence):
     """Collection of lazy elements"""
 
+    locator: MultipleElementLocator
+
     def __init__(self, locator: MultipleElementLocator):  # all hail type hints
         super().__init__(locator)
 
     def __getitem__(self, index: Union[int, slice]) -> Union[Element, ElementCollection]:
         if isinstance(index, slice):
-            return ElementCollection(SlicedElementLocator(self.locator.by, self, index))
-        return Element(IndexElementLocator(self.locator.by, self, index))
+            return ElementCollection(SlicedElementLocator(self.locator, index))
+        return Element(IndexElementLocator(self.locator, index))
 
     def __len__(self) -> int:
         return len(self.get_actual())

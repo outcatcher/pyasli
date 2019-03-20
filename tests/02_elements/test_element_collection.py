@@ -1,5 +1,5 @@
 """Element collection wrapper tests"""
-
+from pyasli.browser import BrowserSession
 from pyasli.elements import Element, ElementCollection
 
 
@@ -29,4 +29,14 @@ def test_collection_get_slice(browser):
 
 
 def test_collection_children(browser):
-    browser.open("/")
+    browser.open("/large")
+    parents = browser.elements("div.example > div")
+    single_child = parents.element("div#no-siblings")
+    assert single_child.text == "No siblings"
+
+
+def test_browser_from_nested_elements(browser):
+    browser.open("/large")
+    parent = browser.element("div.exapmple")
+    child = parent.elements("div#siblings > div")
+    assert isinstance(child.browser, BrowserSession)

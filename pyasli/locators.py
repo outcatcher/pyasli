@@ -1,17 +1,36 @@
 """Lazy locator wrappers"""
-
 from abc import ABC, abstractmethod
 from typing import Any, List, Tuple, Union
 
+from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.remote.webelement import WebElement
+
+
+def _search_in_context(context: "Searchable", method: str, by: tuple) -> List[WebElement]:
+    actual = context.get_actual()
+    if not isinstance(actual, list):
+        actual: List[WebElement] = [actual]
+    result = []
+    for elem in actual:
+        try:
+            found = getattr(elem, method)(*by)
+        except NoSuchElementException:
+            continue
+        if isinstance(found, list):
+            result.extend(found)  # append or extend depending on result of search
+        else:
+            result.append(found)
+    if not result:
+        raise NoSuchElementException
+    return result
 
 
 class LocatorStrategy(ABC):
     """Base class for locator containers"""
 
-    def __init__(self, locator: Tuple[str, str], context: "Searchable"):
+    def __init__(self, by: Tuple[str, str], context: "Searchable"):
         self.context = context
-        self.by = locator
+        self.by = by
 
     @abstractmethod
     def get(self) -> Any:
@@ -26,7 +45,7 @@ class MultipleElementLocator(LocatorStrategy):
 
     def get(self) -> List[WebElement]:
         """Get list of matching web elements"""
-        return self.context.get_actual().find_elements(*self.by)
+        return _search_in_context(self.context, "find_elements", self.by)
 
     def __repr__(self):
         # recursive repr
@@ -38,7 +57,8 @@ class SingleElementLocator(LocatorStrategy):
 
     def get(self) -> WebElement:
         """Get single matching web element"""
-        return self.context.get_actual().find_element(*self.by)
+        result = _search_in_context(self.context, "find_element", self.by)
+        return result[0]
 
     def __repr__(self):
         # recursive repr
@@ -48,38 +68,39 @@ class SingleElementLocator(LocatorStrategy):
 class SubElementLocator(LocatorStrategy):
     """Locator for elements extracted from element list"""
 
-    def __init__(self, locator, context: "ElementCollection", sub: Union[slice, int]):
-        super().__init__(locator, context)
-        self.sub = sub
+    def __init__(self, whole: MultipleElementLocator, sub: Union[slice, int]):
+        super().__init__(whole.by, whole.context)
+        self._whole = whole
+        self._sub = sub
 
     def get(self) -> List[WebElement]:
         """Get slice from element collection (not going deeper)"""
-        elements = self.context.get_actual()
-        return elements[self.sub]
+        elements = self._whole.get()
+        return elements[self._sub]
 
     def __repr__(self):
         # recursive repr
-        return f"{repr(self.context.locator)}[{self.sub}]"
+        return f"{repr(self._whole)}[{self._sub}]"
 
 
 class SlicedElementLocator(SubElementLocator, MultipleElementLocator):
     """Locator for returning slice from element collection"""
 
-    def __init__(self, locator, context, slize: slice):
-        super().__init__(locator, context, slize)
+    def __init__(self, whole: MultipleElementLocator, slize: slice):
+        super().__init__(whole, slize)
 
     def __repr__(self):
         # recursive repr
-        start = "" if self.sub.start is None else self.sub.start
-        stop = "" if self.sub.stop is None else self.sub.stop
+        start = "" if self._sub.start is None else self._sub.start
+        stop = "" if self._sub.stop is None else self._sub.stop
         sss = f"{start}:{stop}"
-        if self.sub.step:
-            sss = f"{sss}:{self.sub.step}"
-        return f"{repr(self.context.locator)}[{sss}]"
+        if self._sub.step:
+            sss = f"{sss}:{self._sub.step}"
+        return f"{repr(self._whole)}[{sss}]"
 
 
 class IndexElementLocator(SubElementLocator, SingleElementLocator):
     """Locator for returning element by index from collection"""
 
-    def __init__(self, locator, context, index: int):
-        super().__init__(locator, context, index)
+    def __init__(self, whole: MultipleElementLocator, index: int):
+        super().__init__(whole, index)

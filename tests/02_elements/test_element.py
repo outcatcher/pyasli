@@ -1,4 +1,5 @@
 """Element wrapper tests"""
+from pyasli.browser import BrowserSession
 from pyasli.bys import by_css
 
 
@@ -60,3 +61,9 @@ def test_input_text(browser):
     assert browser.url == "/secure"
     assert browser.url == "http://the-internet.herokuapp.com/secure"
 
+
+def test_browser_from_nested_element(browser):
+    browser.open("/large")
+    parent = browser.element("div.exapmple")
+    child = parent.element("div#siblings > div")
+    assert isinstance(child.browser, BrowserSession)
