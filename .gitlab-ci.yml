@@ -30,7 +30,6 @@ cache:
     - allure-results/
     - coverage/
     expire_in: 1 day
-  retry: 1
 
 tests-chrome:
   extends: .template

@@ -1,4 +1,6 @@
 """Basic browser session tests"""
+import os
+
 import pytest
 from selenium.common.exceptions import WebDriverException
 from selenium.webdriver import Chrome, ChromeOptions, Firefox, FirefoxOptions, Remote
@@ -16,7 +18,20 @@ def test_open(browser):
     browser.element("html").get_actual()
 
 
+skip_if_ci = pytest.mark.skipif(in_ci(), reason="Running in CI")
+skip_if_not_ci = pytest.mark.skipif(not in_ci(), reason="Running not in CI")
+
+
+@skip_if_ci
 @pytest.mark.xfail(raises=MaxRetryError, reason="Can't connect to quited driver")
+def test_close_all(browser):
+    """Check that all browser windows are closed"""
+    browser.close_all_windows()
+    browser.element("html").get_actual()
+
+
+@skip_if_not_ci
+@pytest.mark.xfail(raises=WebDriverException, reason="Can't connect to quited driver")
 def test_close_all(browser):
     """Check that all browser windows are closed"""
     browser.close_all_windows()
@@ -34,10 +49,6 @@ def test_close_single(browser):
 def test_missing_browser():
     browser = browser_instance()
     browser.element("html")
-
-
-skip_if_ci = pytest.mark.skipif(in_ci(), reason="Running in CI")
-skip_if_not_ci = pytest.mark.skipif(not in_ci(), reason="Running not in CI")
 
 
 @skip_if_ci
@@ -62,7 +73,8 @@ def test_lazy_init():
 @skip_if_not_ci
 def test_remote():
     browser = browser_instance()
-    browser.setup_browser("chrome", remote=True)
+    host = os.environ.get('HOST')
+    browser.setup_browser("chrome", remote=True, command_executor=f"http://{host}:4444/wd/hub")
     browser.open("http://the-internet.herokuapp.com/")
     assert not isinstance(browser.get_actual(), Chrome)
     assert isinstance(browser.get_actual(), Remote)
