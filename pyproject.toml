@@ -5,6 +5,10 @@ description = "(Python) Yet Another Selenium Instruments"
 authors = ["Anton Kachurin <katchuring@gmail.com>"]
 license = "MIT"
 
+[[tool.poetry.source]]
+name = "personal"
+url = "https://pypi.outcatcher.com/simple/"
+
 [tool.poetry.dependencies]
 python = "^3.6.1"
 selenium = "^3.141"

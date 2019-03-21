@@ -17,7 +17,7 @@ cache:
   before_script:
   - pip install poetry
   - poetry config settings.virtualenvs.in-project true
-  - poetry config repositories.private "https://pypi.outcatcher.com/"
+  - poetry config repositories.personal "https://pypi.outcatcher.com/"
   - poetry install
   - export HOST="selenium__standalone-$BROWSER"
   - mkdir -p coverage
@@ -62,8 +62,8 @@ wheel:
   - pages
   before_script:
     - pip install poetry
-    - poetry config repositories.private "https://pypi.outcatcher.com/"
-    - poetry config http-basic.private $PYPI_USERNAME $PYPI_PASSWORD
+    - poetry config repositories.personal "https://pypi.outcatcher.com/"
+    - poetry config http-basic.personal $PYPI_USERNAME $PYPI_PASSWORD
   script:
   - poetry build -f wheel
   - poetry publish -r private
