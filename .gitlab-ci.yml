@@ -27,10 +27,8 @@ cache:
   coverage: '/^TOTAL.+\s(\d+%)$/'
   artifacts:
     paths:
-    - allure-results/
     - coverage/
     expire_in: 1 day
-  retry: 1
 
 tests-chrome:
   extends: .template
@@ -41,8 +39,8 @@ pages:
   stage: pages
   before_script:
     - pip install poetry
-    - poetry run pip install coverage
   script:
+  - poetry run coverage combine coverage/
   - poetry run coverage report -m
   - poetry run coverage html -d coverage
   - mv coverage/ public/
