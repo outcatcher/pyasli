@@ -64,7 +64,7 @@ wheel:
     - poetry config http-basic.personal $PYPI_USERNAME $PYPI_PASSWORD
   script:
   - poetry build -f wheel
-  - poetry publish -r private
+  - poetry publish -r personal
   artifacts:
     paths:
     - dist/
