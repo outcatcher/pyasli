@@ -3,16 +3,6 @@ import shutil
 
 import pytest
 
-from pyasli.browser import BrowserSession
-
-
-@pytest.fixture(scope="module")
-def browser():
-    browser = BrowserSession(headless=True)
-    browser.base_url = "https://the-internet.herokuapp.com/"
-    browser.open("/broken_images")
-    return browser
-
 
 @pytest.mark.xfail(raises=TimeoutError)
 def test_negative_wait(browser):

@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import atexit
 import re
-from functools import partial
-from typing import Dict, NamedTuple, Type
+from typing import Dict, NamedTuple, Type, Union
 
 import wrapt
-from selenium.webdriver import Chrome, ChromeOptions, Firefox, FirefoxOptions, Ie, IeOptions, Remote
+from selenium.webdriver import (
+    Chrome, ChromeOptions, DesiredCapabilities, Firefox, FirefoxOptions, Ie, IeOptions, Remote
+)
 from webdriver_manager.chrome import ChromeDriverManager
 from webdriver_manager.firefox import GeckoDriverManager
 from webdriver_manager.microsoft import IEDriverManager
@@ -54,49 +55,70 @@ class BrowserSession(Searchable):
     """Class containing single webdriver instance and all browser operations"""
 
     __cached__: Remote = None
-    _browser: str = None
-    _options = None
+    browser_name: str = None
+    options = None
+    desired_capabilities = None
     _other_options: dict = None
 
-    def __init__(self, browser="chrome", remote=False, headless=False, options=None, **kwargs):
+    def __init__(self, browser="chrome"):
         """Init new browser session.
-        Arguments for creating webdriver instance other than ``options`` should be passed to kwargs
+        Setup browser to be used to given local headless browser
         """
         # noinspection PyTypeChecker
         super().__init__(BROWSER)
-        self.configure_browser(browser, remote, headless, options, **kwargs)
+        self.setup_browser(browser)
         atexit.register(self.close_all_windows)
+
+    def setup_browser(self, browser: str, remote=False, headless=True,
+                      options: Union[ChromeOptions, FirefoxOptions, IeOptions] = None,
+                      desired_capabilities: DesiredCapabilities = None,
+                      **other_options):
+        """Configure browser to be used
+
+        :param str browser: Name of browser to be used
+        :param bool remote: Is used browser running on remote host.
+            In this case you should set `command_executor` argument to desired host value
+        :param bool headless: If `options` are not set, control `headless` option
+        :param options: Browser options
+        :param desired_capabilities: Browser desired capabilities
+        :param other_options: Other options which will be passed to WebDriver constructor
+        """
+        if remote:
+            self.browser_name = "remote"
+            self.options = options or _OPTIONS_MAPPING[browser]()
+        else:
+            self.browser_name = browser
+            self.options = options
+        if options is None:
+            self.options = _OPTIONS_MAPPING[browser]()
+            self.options.headless = headless
+        self.desired_capabilities = desired_capabilities
+        self._other_options = other_options
 
     def _search(self) -> Wrapped:
         return self.__cached__
 
     def __init_browser(self):
-        """Init browser if it is missing"""
+        """Start new browser instance"""
         if self.__cached__ is not None:
             return
-        browser_cls = _BROWSER_MAPPING[self._browser]
-        driver_partial = partial(browser_cls, options=self._options, **self._other_options)
-        if browser_cls == Remote:
-            self.__cached__ = driver_partial()  # no need to install driver
+        browser_cls = _BROWSER_MAPPING[self.browser_name]
+        if browser_cls is Remote:
+            self.__cached__ = Remote(desired_capabilities=self.desired_capabilities, options=self.options,
+                                     **self._other_options)
             return
-        manager_cls = _MANAGER_MAPPING[self._browser]
-        if browser_cls == Firefox:
-            self.__cached__ = driver_partial(executable_path=manager_cls().install())
+        driver_path = _MANAGER_MAPPING[self.browser_name]().install()
+        if browser_cls is Firefox:
+            self.__cached__ = Firefox(executable_path=driver_path, options=self.options,
+                                      desired_capabilities=self.desired_capabilities, **self._other_options)
         else:
-            self.__cached__ = driver_partial(manager_cls().install())
+            self.__cached__ = browser_cls(driver_path, options=self.options, **self._other_options)
 
-    def configure_browser(self, browser="chrome", remote=False, headless=False, options=None, **kwargs):
-        """Configure browser for session"""
-        if browser not in _BROWSER_MAPPING:
-            raise TypeError(f"Browser `{browser}`` is not supported. Select one of {_BROWSER_MAPPING.keys()}")
-
-        if remote:
-            self._browser = "remote"
-        else:
-            self._browser = browser or self._browser
-        self._options = options or self._options or _OPTIONS_MAPPING[browser]()
-        self._options.headless = headless
-        self._other_options = kwargs or self._other_options or {}
+    def set_driver(self, webdriver: Remote):
+        """Override lazy driver initialization with already initialized webdriver"""
+        if self.__cached__ is not None:
+            self.__cached__.quit()
+        self.__cached__ = webdriver
 
     base_url = None
 
@@ -130,10 +152,11 @@ class BrowserSession(Searchable):
         """Close current browser window"""
         self.get_actual().close()
 
-    @_check_browser
     def close_all_windows(self):
         """Close all browser windows"""
-        self.get_actual().quit()
+        actual = self.get_actual()
+        if actual is not None:
+            self.get_actual().quit()
 
     @property
     def url(self) -> URL:

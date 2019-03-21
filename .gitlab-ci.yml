@@ -1,0 +1,74 @@
+image: python:3.7
+
+stages:
+- test
+- pages
+- build
+
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+  - .venv
+
+.template:
+  stage: test
+  services:
+  - selenium/standalone-$BROWSER
+  before_script:
+  - pip install poetry
+  - poetry config settings.virtualenvs.in-project true
+  - poetry config repositories.private "https://pypi.outcatcher.com/"
+  - poetry install
+  - export HOST="selenium__standalone-$BROWSER"
+  - mkdir -p coverage
+  script:
+  - export COVERAGE_FILE="coverage/.coverage.$BROWSER"
+  - poetry run pytest --cov-config .coveragerc --cov pyasli tests
+  coverage: '/^TOTAL.+\s(\d+%)$/'
+  artifacts:
+    paths:
+    - allure-results/
+    - coverage/
+    expire_in: 1 day
+  retry: 1
+
+tests-chrome:
+  extends: .template
+  variables:
+    BROWSER: chrome
+
+pages:
+  stage: pages
+  before_script:
+    - pip install poetry
+    - poetry run pip install coverage
+  script:
+  - poetry run coverage report -m
+  - poetry run coverage html -d coverage
+  - mv coverage/ public/
+  coverage: '/^TOTAL.+\s(\d+%)$/'
+  dependencies:
+    - tests-chrome
+  artifacts:
+    paths:
+      - public
+    expire_in: 30 days
+  only:
+    - master
+
+wheel:
+  stage: build
+  dependencies:
+  - pages
+  before_script:
+    - pip install poetry
+    - poetry config repositories.private "https://pypi.outcatcher.com/"
+    - poetry config http-basic.private $PYPI_USERNAME $PYPI_PASSWORD
+  script:
+  - poetry build -f wheel
+  - poetry publish -r private
+  artifacts:
+    paths:
+    - dist/
+  only:
+    - master
