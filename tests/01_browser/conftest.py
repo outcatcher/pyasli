@@ -1,10 +1,10 @@
 import pytest
 
-from pyasli.browser import BrowserSession
+from tests.conftest import browser_instance
 
 
 @pytest.fixture
 def browser():
-    browser = BrowserSession()
+    browser = browser_instance()
     browser.open("http://the-internet.herokuapp.com/disappearing_elements")
     return browser

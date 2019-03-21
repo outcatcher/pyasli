@@ -5,7 +5,7 @@ from selenium.webdriver import Chrome, ChromeOptions, Firefox, FirefoxOptions, R
 from urllib3.exceptions import MaxRetryError
 from webdriver_manager.firefox import GeckoDriverManager
 
-from pyasli.browser import BrowserSession, NoBrowserException
+from pyasli.browser import NoBrowserException
 from tests.conftest import browser_instance, in_ci
 
 
@@ -42,26 +42,26 @@ skip_if_not_ci = pytest.mark.skipif(not in_ci(), reason="Running not in CI")
 
 @skip_if_ci
 def test_chrome():
-    browser = BrowserSession("chrome")
+    browser = browser_instance("chrome")
     browser.open("http://the-internet.herokuapp.com/disappearing_elements")
     browser.element("html").get_actual()
 
 
 @skip_if_ci
 def test_firefox():
-    browser = BrowserSession("firefox")
+    browser = browser_instance("firefox")
     browser.open("http://the-internet.herokuapp.com/disappearing_elements")
     browser.element("html").get_actual()
 
 
 def test_lazy_init():
-    browser = BrowserSession()
+    browser = browser_instance()
     assert browser.get_actual() is None
 
 
 @skip_if_not_ci
 def test_remote():
-    browser = BrowserSession()
+    browser = browser_instance()
     browser.setup_browser("chrome", remote=True)
     browser.open("http://the-internet.herokuapp.com/")
     assert not isinstance(browser.get_actual(), Chrome)
@@ -75,8 +75,9 @@ def test_url_check(browser):
     assert browser.url == "http://the-internet.herokuapp.com/disappearing_elements"
 
 
+@skip_if_ci
 def test_set_driver():
-    browser = BrowserSession()
+    browser = browser_instance()
     options = FirefoxOptions()
     options.headless = True
     browser.set_driver(Firefox(options=options, executable_path=GeckoDriverManager().install()))
@@ -84,8 +85,9 @@ def test_set_driver():
     browser.open("http://the-internet.herokuapp.com/")
 
 
+@skip_if_ci
 def test_replace_driver():
-    browser = BrowserSession()
+    browser = browser_instance()
     browser.open("http://the-internet.herokuapp.com/")
     options = FirefoxOptions()
     options.headless = True
