@@ -3,15 +3,17 @@ import shutil
 
 import pytest
 
+from pyasli.conditions import visible
 
-@pytest.mark.xfail(raises=TimeoutError)
+
 def test_negative_wait(browser):
-    browser.element("div#id").assure.visible(0.5)
+    with pytest.raises(TimeoutError):
+        browser.element("div#id").assure(visible, 0.5)
 
 
-@pytest.mark.xfail(raises=AssertionError)
 def test_negative_wait_assert(browser):
-    browser.element("div#id").should_be.visible(0.5)
+    with pytest.raises(AssertionError):
+        browser.element("div#id").should_be(visible, 0.5)
 
 
 @pytest.fixture
@@ -24,7 +26,7 @@ def cleanup():
 
 def test_negative_wait_screenshot(browser, cleanup):
     try:
-        browser.element("div#id").assure.visible(0.5)
+        browser.element("div#id").assure(visible, 0.5)
     except TimeoutError:
         pass
     for roots, dirs, files in os.walk("./logs"):

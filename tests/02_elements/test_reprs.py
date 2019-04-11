@@ -30,6 +30,38 @@ class TestCollectionsRepr:
         examples, elem_loc = __examples
         assert repr(examples) == f"Element Collection by: 'Browser' -> [('css selector', '{elem_loc}')]"
 
+    def test_filter_repr(self, __examples):
+        examples, elem_loc = __examples
+
+        def _my_cond(el):
+            return bool(el)
+
+        filtered = examples.filter(_my_cond)
+        assert repr(filtered) == f"{repr(examples)}.filter(_my_cond)"
+
+    def test_find_repr(self, __examples):
+        examples, elem_loc = __examples
+
+        def _my_cond(el):
+            return bool(el)
+
+        found = examples.find(_my_cond)
+        assert repr(found) == f"Element by: 'Browser' -> [('css selector', '{elem_loc}')].find(_my_cond)"
+
+    def test_index_in_slice(self, __examples):
+        examples, elem_loc = __examples
+        assert repr(examples[:3][1]) == f"Element by: 'Browser' -> [('css selector', '{elem_loc}')][:3][1]"
+
+    def test_slice_in_filter(self, __examples):
+        examples, elem_loc = __examples
+
+        def _my_cond(el):
+            return bool(el)
+
+        found = examples.filter(_my_cond)
+        assert repr(found[1:3]) == f"Element Collection by: 'Browser' -> [('css selector', '{elem_loc}')]" \
+            f".filter(_my_cond)[1:3]"
+
 
 def test_element_repr(browser):
     browser.open("/dynamic_loading/1")

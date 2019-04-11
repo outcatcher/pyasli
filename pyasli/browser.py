@@ -6,7 +6,6 @@ import atexit
 import re
 from typing import Dict, NamedTuple, Type, Union
 
-import wrapt
 from selenium.webdriver import (
     Chrome, ChromeOptions, DesiredCapabilities, Firefox, FirefoxOptions, Ie, IeOptions, Remote
 )
@@ -15,7 +14,8 @@ from webdriver_manager.firefox import GeckoDriverManager
 from webdriver_manager.microsoft import IEDriverManager
 
 from pyasli.bys import CssSelectorOrBy
-from pyasli.elements import BROWSER, Element, ElementCollection, Searchable, Wrapped
+from pyasli.elements.elements import Element, ElementCollection, FindElementsMixin
+from pyasli.elements.searchable import BROWSER, Searchable
 
 _BROWSER_MAPPING: Dict[str, Type[Remote]] = {
     "chrome": Chrome,
@@ -41,30 +41,27 @@ class NoBrowserException(Exception):
     """No operatable browser is open"""
 
 
-@wrapt.decorator
-def _check_browser(wrapped, instance: BrowserSession = None, args=(), kwargs=None):
-    if instance.__cached__ is None:
-        raise NoBrowserException("You should open some page before doing anything")
-    return wrapped(*args, **kwargs)
-
-
 _FULL_URL_RE = re.compile(r"http(s)?://.+")
 
 
-class BrowserSession(Searchable):
+class BrowserSession(Searchable, FindElementsMixin):
     """Class containing single webdriver instance and all browser operations"""
 
-    __cached__: Remote = None
+    _actual: Remote = None
+    __is_browser__ = True
     browser_name: str = None
     options = None
     desired_capabilities = None
     _other_options: dict = None
 
+    def _check_running(self):
+        if self._actual is None:
+            raise NoBrowserException("You should open some page before doing anything")
+
     def __init__(self, browser="chrome"):
         """Init new browser session.
         Setup browser to be used to given local headless browser
         """
-        # noinspection PyTypeChecker
         super().__init__(BROWSER)
         self.setup_browser(browser)
         atexit.register(self.close_all_windows)
@@ -95,30 +92,27 @@ class BrowserSession(Searchable):
         self.desired_capabilities = desired_capabilities
         self._other_options = other_options
 
-    def _search(self) -> Wrapped:
-        return self.__cached__
-
     def __init_browser(self):
         """Start new browser instance"""
-        if self.__cached__ is not None:
+        if self._actual is not None:
             return
         browser_cls = _BROWSER_MAPPING[self.browser_name]
         if browser_cls is Remote:
-            self.__cached__ = Remote(desired_capabilities=self.desired_capabilities, options=self.options,
-                                     **self._other_options)
+            self._actual = Remote(desired_capabilities=self.desired_capabilities, options=self.options,
+                                  **self._other_options)
             return
         driver_path = _MANAGER_MAPPING[self.browser_name]().install()
         if browser_cls is Firefox:
-            self.__cached__ = Firefox(executable_path=driver_path, options=self.options,
-                                      desired_capabilities=self.desired_capabilities, **self._other_options)
+            self._actual = Firefox(executable_path=driver_path, options=self.options,
+                                   desired_capabilities=self.desired_capabilities, **self._other_options)
         else:
-            self.__cached__ = browser_cls(driver_path, options=self.options, **self._other_options)
+            self._actual = browser_cls(driver_path, options=self.options, **self._other_options)
 
     def set_driver(self, webdriver: Remote):
         """Override lazy driver initialization with already initialized webdriver"""
-        if self.__cached__ is not None:
-            self.__cached__.quit()
-        self.__cached__ = webdriver
+        if self._actual is not None:
+            self._actual.quit()
+        self._actual = webdriver
 
     base_url = None
 
@@ -130,42 +124,46 @@ class BrowserSession(Searchable):
             if not url.startswith("/"):
                 url = f"/{url}"
             url = f"{self.base_url}{url}"
-        self.get_actual().get(url)
+        self._actual.get(url)
 
-    @_check_browser
     def element(self, by: CssSelectorOrBy) -> Element:
         """Find single element by locator (css selector by default)"""
+        self._check_running()
         return super().element(by)
 
-    @_check_browser
     def elements(self, by: CssSelectorOrBy) -> ElementCollection:
         """Find single element by locator (css selector by default)"""
+        self._check_running()
         return super().elements(by)
 
-    @_check_browser
     def add_cookie(self, cookie_dict: dict):
         """Add cookies to cookie storage"""
-        self.get_actual().add_cookie(cookie_dict)
+        self._check_running()
+        self._actual.add_cookie(cookie_dict)
 
-    @_check_browser
     def close_window(self):
         """Close current browser window"""
-        self.get_actual().close()
+        self._check_running()
+        self._actual.close()
 
     def close_all_windows(self):
         """Close all browser windows"""
-        actual = self.get_actual()
+        actual = self._actual
         if actual is not None:
-            self.get_actual().quit()
+            actual.quit()
 
     @property
     def url(self) -> URL:
         """Get current page URL"""
-        return URL(self.get_actual().current_url, self.base_url)
+        return URL(self._actual.current_url, self.base_url)
 
     def get_screenshot_as_png(self):
         """Make new page screenshot"""
-        return self.get_actual().get_screenshot_as_png()
+        return self._actual.get_screenshot_as_png()
+
+    def get_actual(self):
+        """Get browser instance"""
+        return self._actual
 
 
 def _url_with_base(base_url: str, uri: str) -> str:

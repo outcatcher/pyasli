@@ -7,14 +7,14 @@ from selenium.webdriver import Chrome, ChromeOptions, Firefox, FirefoxOptions, R
 from urllib3.exceptions import MaxRetryError
 from webdriver_manager.firefox import GeckoDriverManager
 
-from pyasli.browser import NoBrowserException
-from tests.conftest import browser_instance, in_ci
+from pyasli.browser import NoBrowserException, URL
+from tests.conftest import browser_instance, in_ci, tags
 
 
-def test_open(browser):
+def test_open(base_url):
     """No exceptions is enough here"""
     browser = browser_instance()
-    browser.open("http://the-internet.herokuapp.com/disappearing_elements")
+    browser.open(f"{base_url}/disappearing_elements")
     browser.element("html").get_actual()
 
 
@@ -23,86 +23,104 @@ skip_if_not_ci = pytest.mark.skipif(not in_ci(), reason="Running not in CI")
 
 
 @skip_if_ci
-@pytest.mark.xfail(raises=MaxRetryError, reason="Can't connect to quited driver")
-def test_close_all(browser):
+def test_close_all_local(single_time_browser):
     """Check that all browser windows are closed"""
-    browser.close_all_windows()
-    browser.element("html").get_actual()
+    single_time_browser.close_all_windows()
+    with pytest.raises(MaxRetryError):
+        single_time_browser.element("html").get_actual()
+
+
+def test_close_all_not_started():
+    brw = browser_instance()
+    brw.close_all_windows()
 
 
 @skip_if_not_ci
-@pytest.mark.xfail(raises=WebDriverException, reason="Can't connect to quited driver")
-def test_close_all(browser):
+def test_close_all_ci(single_time_browser):
     """Check that all browser windows are closed"""
-    browser.close_all_windows()
-    browser.element("html").get_actual()
+    single_time_browser.close_all_windows()
+    with pytest.raises(WebDriverException):
+        single_time_browser.element("html").get_actual()
 
 
-@pytest.mark.xfail(raises=WebDriverException, reason="Can't interact with already closed browser")
-def test_close_single(browser):
+def test_close_single(single_time_browser):
     """Check that single browser window is closed"""
-    browser.close_window()
-    browser.element("html").get_actual()
+    single_time_browser.close_window()
+    with pytest.raises(WebDriverException):
+        single_time_browser.element("html").get_actual()
 
 
-@pytest.mark.xfail(raises=NoBrowserException, reason="Can't interact with non-existing browser")
-def test_missing_browser():
+def test_no_open_page():
     browser = browser_instance()
-    browser.element("html")
+    with pytest.raises(NoBrowserException):
+        browser.element("html")
 
 
+@tags("chrome")
 @skip_if_ci
-def test_chrome():
+def test_chrome(base_url):
     browser = browser_instance("chrome")
-    browser.open("http://the-internet.herokuapp.com/disappearing_elements")
+    browser.open(f"{base_url}/disappearing_elements")
     browser.element("html").get_actual()
 
 
+@tags("firefox")
 @skip_if_ci
-def test_firefox():
+def test_firefox(base_url):
     browser = browser_instance("firefox")
-    browser.open("http://the-internet.herokuapp.com/disappearing_elements")
+    browser.open(f"{base_url}/disappearing_elements")
     browser.element("html").get_actual()
 
 
 def test_lazy_init():
     browser = browser_instance()
-    assert browser.get_actual() is None
+    assert browser._actual is None
 
 
 @skip_if_not_ci
-def test_remote():
+def test_remote(base_url):
     browser = browser_instance()
     host = os.environ.get('HOST')
     browser.setup_browser("chrome", remote=True, command_executor=f"http://{host}:4444/wd/hub")
-    browser.open("http://the-internet.herokuapp.com/")
-    assert not isinstance(browser.get_actual(), Chrome)
-    assert isinstance(browser.get_actual(), Remote)
+    browser.open(base_url)
+    assert not isinstance(browser._actual, Chrome)
+    assert isinstance(browser._actual, Remote)
     assert isinstance(browser.options, ChromeOptions)
 
 
-def test_url_check(browser):
+def test_url_check(browser, base_url):
     """No exceptions is enough here"""
-    browser.open("http://the-internet.herokuapp.com/disappearing_elements")
-    assert browser.url == "http://the-internet.herokuapp.com/disappearing_elements"
+    url = f"{base_url}/disappearing_elements"
+    browser.open(url)
+    assert browser.url == url
 
 
+@tags("firefox")
 @skip_if_ci
-def test_set_driver():
+def test_set_driver(base_url):
     browser = browser_instance()
     options = FirefoxOptions()
     options.headless = True
     browser.set_driver(Firefox(options=options, executable_path=GeckoDriverManager().install()))
-    assert isinstance(browser.get_actual(), Firefox)  # not lazy!
-    browser.open("http://the-internet.herokuapp.com/")
+    assert isinstance(browser._actual, Firefox)  # not lazy!
+    browser.open(base_url)
 
 
+@tags("firefox")
 @skip_if_ci
-def test_replace_driver():
+def test_replace_driver(base_url):
     browser = browser_instance()
-    browser.open("http://the-internet.herokuapp.com/")
+    browser.open(base_url)
     options = FirefoxOptions()
     options.headless = True
     browser.set_driver(Firefox(options=options, executable_path=GeckoDriverManager().install()))
-    assert isinstance(browser.get_actual(), Firefox)  # not lazy!
-    browser.open("http://the-internet.herokuapp.com/")
+    assert isinstance(browser._actual, Firefox)  # not lazy!
+    browser.open(base_url)
+
+
+def test_no_base_url():
+    actual = "dfsbhjhjdgflslidgfsn"
+    url = URL(actual, None)
+    assert url.base_url is None
+    assert url.url == actual
+    assert url == actual
