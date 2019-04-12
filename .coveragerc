@@ -13,6 +13,9 @@ exclude_lines =
     # Don't complain about missing debug-only code:
     if self\.debug
 
+    # Skip elipsis
+    :\s*\.\.\.
+
     # Don't complain if tests don't hit defensive assertion code:
     raise AssertionError
     raise NotImplementedError

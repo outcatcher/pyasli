@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import atexit
 import re
-from typing import Dict, NamedTuple, Type, Union
+from typing import Any, Dict, NamedTuple, Optional, Type, Union
 
 from selenium.webdriver import (
     Chrome, ChromeOptions, DesiredCapabilities, Firefox, FirefoxOptions, Ie, IeOptions, Remote
@@ -15,7 +15,7 @@ from webdriver_manager.microsoft import IEDriverManager
 
 from pyasli.bys import CssSelectorOrBy
 from pyasli.elements.elements import Element, ElementCollection, FindElementsMixin
-from pyasli.elements.searchable import BROWSER, Searchable
+from pyasli.elements.searchable import LocatorStrategy, Searchable
 
 _BROWSER_MAPPING: Dict[str, Type[Remote]] = {
     "chrome": Chrome,
@@ -44,25 +44,46 @@ class NoBrowserException(Exception):
 _FULL_URL_RE = re.compile(r"http(s)?://.+")
 
 
-class BrowserSession(Searchable, FindElementsMixin):
-    """Class containing single webdriver instance and all browser operations"""
+# noinspection PyTypeChecker
+class BrowserLocatorStrategy(LocatorStrategy):
+    """Root level locator strategy"""
+    context: BrowserSession  # pylint: disable=used-before-assignment
 
-    _actual: Remote = None
+    def get(self) -> Any:
+        """Return actual browser"""
+        raise NotImplementedError  # should not be used
+
+    def __repr__(self) -> str:
+        return self.context.browser_name.capitalize()
+
+    def __init__(self, browser_session: BrowserSession):
+        super().__init__(None, browser_session)
+
+
+class BrowserSession(Searchable, FindElementsMixin):
+    """Lazy webdriver wrapper"""
+
+    _actual: Optional[Remote] = None
     __is_browser__ = True
     browser_name: str = None
     options = None
     desired_capabilities = None
     _other_options: dict = None
 
+    @property
+    def browser(self):
+        """Browser of browser is self XD"""
+        return self  # pragma: no cover
+
     def _check_running(self):
         if self._actual is None:
             raise NoBrowserException("You should open some page before doing anything")
 
     def __init__(self, browser="chrome"):
-        """Init new browser session.
+        """Init new lazy browser session.
         Setup browser to be used to given local headless browser
         """
-        super().__init__(BROWSER)
+        super().__init__(BrowserLocatorStrategy(self))
         self.setup_browser(browser)
         atexit.register(self.close_all_windows)
 
@@ -151,6 +172,7 @@ class BrowserSession(Searchable, FindElementsMixin):
         actual = self._actual
         if actual is not None:
             actual.quit()
+            self._actual = None
 
     @property
     def url(self) -> URL:
