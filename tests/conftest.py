@@ -3,7 +3,7 @@ import time
 
 import pytest
 
-from pyasli.browser import BrowserSession
+from pyasli.browsers import BrowserSession
 from pyasli.elements.elements import Element
 
 
@@ -16,6 +16,10 @@ def base_url():
 def in_ci():
     """Check if test is running in gitlab-ci"""
     return os.getenv("CI_JOB_NAME") is not None
+
+
+skip_if_ci = pytest.mark.skipif(in_ci(), reason="Running in CI")
+skip_if_not_ci = pytest.mark.skipif(not in_ci(), reason="Running not in CI")
 
 
 @pytest.fixture(scope="module")

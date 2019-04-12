@@ -2,7 +2,7 @@
 import pytest
 from selenium.common.exceptions import NoSuchElementException
 
-from pyasli.browser import BrowserSession
+from pyasli.browsers import BrowserSession
 from pyasli.elements.elements import Element, ElementCollection
 
 

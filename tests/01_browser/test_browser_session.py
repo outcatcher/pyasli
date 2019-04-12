@@ -4,11 +4,10 @@ import os
 import pytest
 from selenium.common.exceptions import WebDriverException
 from selenium.webdriver import Chrome, ChromeOptions, Firefox, FirefoxOptions, Remote
-from urllib3.exceptions import MaxRetryError
 from webdriver_manager.firefox import GeckoDriverManager
 
-from pyasli.browser import NoBrowserException, URL
-from tests.conftest import browser_instance, in_ci, tags
+from pyasli.browsers.browser_session import NoBrowserException, URL
+from tests.conftest import browser_instance, skip_if_ci, skip_if_not_ci, tags
 
 
 def test_open(base_url):
@@ -18,15 +17,10 @@ def test_open(base_url):
     browser.element("html").get_actual()
 
 
-skip_if_ci = pytest.mark.skipif(in_ci(), reason="Running in CI")
-skip_if_not_ci = pytest.mark.skipif(not in_ci(), reason="Running not in CI")
-
-
-@skip_if_ci
-def test_close_all_local(single_time_browser):
+def test_close_all(single_time_browser):
     """Check that all browser windows are closed"""
     single_time_browser.close_all_windows()
-    with pytest.raises(MaxRetryError):
+    with pytest.raises(NoBrowserException):
         single_time_browser.element("html").get_actual()
 
 
@@ -35,12 +29,9 @@ def test_close_all_not_started():
     brw.close_all_windows()
 
 
-@skip_if_not_ci
-def test_close_all_ci(single_time_browser):
-    """Check that all browser windows are closed"""
+def test_close_all_reopen(single_time_browser):
     single_time_browser.close_all_windows()
-    with pytest.raises(WebDriverException):
-        single_time_browser.element("html").get_actual()
+    single_time_browser.open("/")
 
 
 def test_close_single(single_time_browser):

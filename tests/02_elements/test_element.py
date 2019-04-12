@@ -2,7 +2,7 @@
 
 import pytest
 
-from pyasli.browser import BrowserSession
+from pyasli.browsers import BrowserSession
 from pyasli.bys import by_css
 from pyasli.conditions import exist, hidden, visible
 from pyasli.elements.elements import Element

@@ -16,7 +16,7 @@ class Searchable(ABC):
 
     __cached__: Wrapped = None
     __is_browser__ = False
-    _locator: LocatorStrategy
+    _locator: LocatorStrategy  # pylint: disable=used-before-assignment
 
     def __init__(self, locator: LocatorStrategy):
         self._locator = locator
