@@ -15,6 +15,7 @@ from pyasli.elements.locators import (
     SingleElementLocator, SlicedElementLocator
 )
 from pyasli.elements.searchable import Searchable
+from pyasli.exceptions import NoBrowserException
 from pyasli.wait import wait_for
 
 
@@ -79,6 +80,8 @@ class Element(Searchable, FindElementsMixin):
 
     def get_actual(self) -> WebElement:
         """Get element, check if it's cached or already dead"""
+        if self.browser.get_actual() is None:
+            raise NoBrowserException
         if (self.__cached__ is None) or self._element_is_dead():
             self.__cached__ = self._search()
         return self.__cached__

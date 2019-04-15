@@ -16,6 +16,7 @@ from webdriver_manager.microsoft import IEDriverManager
 from pyasli.bys import CssSelectorOrBy
 from pyasli.elements.elements import Element, ElementCollection, FindElementsMixin
 from pyasli.elements.searchable import LocatorStrategy, Searchable
+from pyasli.exceptions import NoBrowserException
 
 _BROWSER_MAPPING: Dict[str, Type[Remote]] = {
     "chrome": Chrome,
@@ -35,11 +36,6 @@ _MANAGER_MAPPING = {
     "ie": IEDriverManager,
     "firefox": GeckoDriverManager,
 }
-
-
-class NoBrowserException(Exception):
-    """No operatable browser is open"""
-
 
 _FULL_URL_RE = re.compile(r"http(s)?://.+")
 
@@ -149,12 +145,10 @@ class BrowserSession(Searchable, FindElementsMixin):
 
     def element(self, by: CssSelectorOrBy) -> Element:
         """Find single element by locator (css selector by default)"""
-        self._check_running()
         return super().element(by)
 
     def elements(self, by: CssSelectorOrBy) -> ElementCollection:
         """Find single element by locator (css selector by default)"""
-        self._check_running()
         return super().elements(by)
 
     def add_cookie(self, cookie_dict: dict):

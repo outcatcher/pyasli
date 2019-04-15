@@ -43,8 +43,9 @@ def test_close_single(single_time_browser):
 
 def test_no_open_page():
     browser = browser_instance()
+    el = browser.element("html")
     with pytest.raises(NoBrowserException):
-        browser.element("html")
+        el.get_actual()
 
 
 @tags("chrome")
