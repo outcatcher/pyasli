@@ -21,7 +21,8 @@ assert element1.get_actual() is element1.get_actual(), "Element is found 2 times
 ```python
 from tests.conftest import browser_instance
 
-with browser_instance(base_url="/disappearing_elements") as browser:
+with browser_instance(base_url="https://the-internet.herokuapp.com") as browser:
+    browser.open("/disappearing_elements")
     element1 = browser.element("div.example p")
     assert element1.get_actual() is element1.get_actual(), "Element is found 2 times"
 ```
