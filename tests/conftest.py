@@ -24,23 +24,23 @@ skip_if_not_ci = pytest.mark.skipif(not in_ci(), reason="Running not in CI")
 
 @pytest.fixture(scope="module")
 def browser(base_url):
-    browser = browser_instance()
-    browser.base_url = base_url
-    browser.open("/broken_images")
-    return browser
+    with browser_instance() as browser:
+        browser.base_url = base_url
+        browser.open("/broken_images")
+        yield browser
 
 
 @pytest.fixture
 def single_time_browser(base_url):
-    browser = browser_instance()
-    browser.base_url = base_url
-    browser.open("/broken_images")
-    return browser
+    with browser_instance() as browser:
+        browser.base_url = base_url
+        browser.open("/broken_images")
+        yield browser
 
 
-def browser_instance(browser: str = "chrome") -> BrowserSession:
+def browser_instance(browser: str = "chrome", base_url=None) -> BrowserSession:
     """Init browser session instance"""
-    instance = BrowserSession(browser)
+    instance = BrowserSession(browser, base_url)
     if in_ci():  # configure remote for CI
         _brw = os.environ.get("BROWSER")
         _host = os.environ.get("HOST")
