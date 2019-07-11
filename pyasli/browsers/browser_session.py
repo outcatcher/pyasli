@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import atexit
 import re
+from contextlib import AbstractContextManager
 from typing import Any, Dict, NamedTuple, Optional, Type, Union
 
 from selenium.webdriver import (
@@ -56,7 +57,7 @@ class BrowserLocatorStrategy(LocatorStrategy):
         super().__init__(None, browser_session)
 
 
-class BrowserSession(Searchable, FindElementsMixin):
+class BrowserSession(Searchable, FindElementsMixin, AbstractContextManager):
     """Lazy webdriver wrapper"""
 
     _actual: Optional[Remote] = None
@@ -65,6 +66,8 @@ class BrowserSession(Searchable, FindElementsMixin):
     options = None
     desired_capabilities = None
     _other_options: dict = None
+
+    base_url: str = None
 
     @property
     def browser(self):
@@ -75,12 +78,13 @@ class BrowserSession(Searchable, FindElementsMixin):
         if self._actual is None:
             raise NoBrowserException("You should open some page before doing anything")
 
-    def __init__(self, browser="chrome"):
+    def __init__(self, browser="chrome", base_url=None):
         """Init new lazy browser session.
         Setup browser to be used to given local headless browser
         """
         super().__init__(BrowserLocatorStrategy(self))
         self.setup_browser(browser)
+        self.base_url = base_url
         atexit.register(self.close_all_windows)
 
     def setup_browser(self, browser: str, remote=False, headless=True,
@@ -131,8 +135,6 @@ class BrowserSession(Searchable, FindElementsMixin):
             self._actual.quit()
         self._actual = webdriver
 
-    base_url = None
-
     def open(self, url: str):
         """Open given URL"""
         self.__init_browser()
@@ -160,6 +162,9 @@ class BrowserSession(Searchable, FindElementsMixin):
         """Close current browser window"""
         self._check_running()
         self._actual.close()
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.close_all_windows()
 
     def close_all_windows(self):
         """Close all browser windows"""
