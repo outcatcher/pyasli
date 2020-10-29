@@ -16,8 +16,7 @@ cache:
   - selenium/standalone-$BROWSER
   before_script:
   - pip install poetry
-  - poetry config settings.virtualenvs.in-project true
-  - poetry config repositories.personal "https://pypi.outcatcher.com/"
+  - poetry config virtualenvs.in-project true
   - poetry install
   - export HOST="selenium__standalone-$BROWSER"
   - mkdir -p coverage
@@ -34,6 +33,14 @@ tests-chrome:
   extends: .template
   variables:
     BROWSER: chrome
+
+tests-chrome:
+  extends: .template
+  variables:
+    BROWSER: chrome
+  only:
+    refs:
+      - merge_requests
 
 pages:
   stage: pages
@@ -59,14 +66,12 @@ wheel:
   dependencies:
   - pages
   before_script:
-    - pip install poetry
-    - poetry config repositories.personal "https://pypi.outcatcher.com/"
-    - poetry config http-basic.personal $PYPI_USERNAME $PYPI_PASSWORD
+  - pip install poetry
   script:
   - poetry build -f wheel
-  - poetry publish -r personal
+  - poetry publish -u $PYPI_USERNAME -p $PYPI_PASSWORD
   artifacts:
     paths:
     - dist/
   only:
-    - master
+    - tags
