@@ -202,7 +202,11 @@ class URL(NamedTuple):
     url: str
     base_url: str = None
 
-    def __eq__(self, other: str):
-        this = _url_with_base(self.base_url, self.url)
-        other = _url_with_base(self.base_url, other)
-        return this == other
+    def __str__(self):
+        return _url_with_base(self.base_url, self.url)
+
+    def __eq__(self, other):
+        return str(self) == _url_with_base(self.base_url, str(other))
+
+    def __ne__(self, other):
+        return str(self) != _url_with_base(self.base_url, str(other))

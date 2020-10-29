@@ -36,7 +36,7 @@ def text_is(text: str) -> ElementCondition:
     return _text_is
 
 
-def has_text(text: str) -> ElementCondition:
+def have_text(text: str) -> ElementCondition:
     """Contains text"""
 
     def _has_text(element):
@@ -44,3 +44,6 @@ def has_text(text: str) -> ElementCondition:
 
     _has_text.__name__ = f"has_text '{text}'"
     return _has_text
+
+
+has_text = have_text  # backward compatibility
