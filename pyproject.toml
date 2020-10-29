@@ -3,6 +3,7 @@ name = "pyasli"
 version = "0.2.3"
 description = "(Python) Yet Another Selenium Instruments"
 authors = ["Anton Kachurin <katchuring@gmail.com>"]
+readme = "README.md"
 license = "MIT"
 
 [tool.poetry.dependencies]
