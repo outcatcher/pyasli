@@ -89,12 +89,19 @@ class ElementMock(Element):
     """Element mocking checks"""
 
     def __init__(self):
-        self.timeout = 0.1
+        self.timeout = 0.01
         self._locator = None
         self._visible = TimeoutCondition(self.timeout)
         self._text = TimeoutCondition(self.timeout, ("before", "after"))
-        self._hidden = TimeoutCondition(self.timeout)
         self._exists = TimeoutCondition(self.timeout)
+        self._enabled = TimeoutCondition(self.timeout)
+        self._refresh_state()
+
+    def _refresh_state(self):
+        self._exists()
+        self._visible()
+        self._enabled()
+        self._text()
 
     def _search(self):
         return None
@@ -108,12 +115,12 @@ class ElementMock(Element):
         return self._text()
 
     @property
-    def hidden(self):
-        return self._hidden()
-
-    @property
     def exists(self):
         return self._exists()
+
+    @property
+    def enabled(self):
+        return self._enabled()
 
 
 @pytest.fixture
