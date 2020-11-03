@@ -193,13 +193,9 @@ class Element(Searchable, FindElementsMixin, Screenshotable):
     @_should_exist
     def enabled(self):
         """Return element enabled state"""
-
-        def _enabled(_el: WebElement):
-            enab = _el.is_enabled()
-            disab = _el.get_attribute("disabled") or _el.get_attribute("aria-disabled")
-            return enab and not disab
-
-        return _enabled(self.get_actual())
+        _enabled = self.get_actual().is_enabled()
+        _disabled = self.get_attribute("disabled") or self.get_attribute("aria-disabled")
+        return _enabled and not _disabled
 
     @property
     def disabled(self):
