@@ -20,10 +20,42 @@ def __exists(element: Element) -> bool:
     return element.exists
 
 
+def __enabled(element: Element):
+    """Condition to check if element is not disabled"""
+    return element.enabled
+
+
+def __disabled(element: Element):
+    """Condition to check if element is disabled"""
+    return element.disabled
+
+
+def __missing(element: Element):
+    """Condition to check if element is missing from DOM
+
+    Antonym to `exists`
+    """
+    return not element.exists
+
+
+def __clickable(element: Element) -> bool:
+    """Check if element available for interaction"""
+    return __visible(element) and __enabled(element)
+
+
+def __rename(fnc, name):
+    fnc.__name__ = name
+    return fnc
+
+
 # looks stupid, but this way PyCharm won't add brackets automatically
-visible = __visible
-hidden = __hidden
-exist = __exists
+visible = __rename(__visible, "visible")
+hidden = __rename(__hidden, "hidden")
+exist = __rename(__exists, "exist")
+missing = __rename(__missing, "missing")
+enabled = __rename(__enabled, "enabled")
+disabled = __rename(__disabled, "disabled")
+clickable = __rename(__clickable, "clickable")
 
 
 def text_is(text: str) -> ElementCondition:

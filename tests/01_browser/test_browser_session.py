@@ -93,6 +93,14 @@ def test_url_check(single_time_browser, base_url):
         assert browser.url == f"{base_url}{url}"
 
 
+def test_url_ne_check(single_time_browser, base_url):
+    """No exceptions is enough here"""
+    with browser_instance(base_url=base_url) as browser:
+        url = "/disappearing_elements"
+        browser.open(url)
+        assert browser.url != f"{base_url}/.../{url}"
+
+
 @tags("firefox")
 @skip_if_ci
 def test_set_driver(base_url):

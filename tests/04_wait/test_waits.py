@@ -6,29 +6,28 @@ import pytest
 from pyasli.conditions import visible
 
 
-def test_negative_wait(browser):
+def test_negative_wait(browser, cleanup):
     with pytest.raises(TimeoutError):
-        browser.element("div#id").assure(visible, 0.5)
+        browser.element("div#id").assure(visible, 0.1)
+    _check_screenshot()
 
 
-def test_negative_wait_assert(browser):
+def test_negative_wait_assert(browser, cleanup):
     with pytest.raises(AssertionError):
-        browser.element("div#id").should_be(visible, 0.5)
+        browser.element("div#id").should_be(visible, 0.1)
+    _check_screenshot()
 
 
 @pytest.fixture
 def cleanup():
+    yield
     lgs = "./logs"
-    if not os.path.exists(lgs):
-        return
-    shutil.rmtree(lgs)
+    if os.path.exists(lgs):
+        shutil.rmtree(lgs)
 
 
-def test_negative_wait_screenshot(browser, cleanup):
-    try:
-        browser.element("div#id").assure(visible, 0.5)
-    except TimeoutError:
-        pass
-    for roots, dirs, files in os.walk("./logs"):
+def _check_screenshot():
+    for _, _, files in os.walk("./logs"):
         assert len(files) == 1
-        assert files[0].endswith(".png")
+        screenshot = files[0]
+        assert screenshot.endswith(".png")
