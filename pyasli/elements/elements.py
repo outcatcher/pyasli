@@ -15,7 +15,7 @@ from pyasli.elements.locators import (
     SingleElementLocator, SlicedElementLocator
 )
 from pyasli.elements.searchable import Searchable
-from pyasli.exceptions import NoBrowserException
+from pyasli.exceptions import NoBrowserException, Screenshotable, screenshot_on_fail
 from pyasli.wait import wait_for
 
 
@@ -23,7 +23,10 @@ from pyasli.wait import wait_for
 
 @wrapt.decorator
 def _should_exist(wrapped, instance: Element = None, args=(), kwargs=None):
-    """Check for element existence before run method"""
+    """Check for element existence before run method
+
+    This decorator uses `assure`, so screenshot will be taken automatically on fail
+    """
     if instance is None:
         instance = args[0]
 
@@ -54,9 +57,10 @@ class FindElementsMixin:
         return ElementCollection(MultipleElementLocator(by, self))
 
 
-class Element(Searchable, FindElementsMixin):
+class Element(Searchable, FindElementsMixin, Screenshotable):
     """Single lazy element"""
 
+    @screenshot_on_fail
     def __wait_for_condition(self, condition, timeout, exception_cls):
         exception = exception_cls(f"Condition {condition.__name__} is not reached in {timeout} seconds for {self}")
         wait_for(self, condition, timeout, exception)
@@ -135,6 +139,7 @@ class Element(Searchable, FindElementsMixin):
         return self.get_attribute("value")
 
     @property
+    @screenshot_on_fail
     def visible(self):
         """Check if element is visible"""
         if not self.exists:
@@ -147,6 +152,7 @@ class Element(Searchable, FindElementsMixin):
         return not self.visible
 
     @property
+    @screenshot_on_fail
     def exists(self):
         """Check if element exists in dom"""
         try:
@@ -231,6 +237,13 @@ class Element(Searchable, FindElementsMixin):
         if filter_condition is None:
             return elements
         return elements.filter(filter_condition)
+
+    def capture_screenshot(self) -> bytes:
+        """Capture single element screenshot"""
+        try:
+            return self.get_actual().screenshot_as_png
+        except WebDriverException:  # if get_actual has failed
+            return self.browser.capture_screenshot()
 
     def __repr__(self):
         return f"Element by: {repr(self._locator)}"

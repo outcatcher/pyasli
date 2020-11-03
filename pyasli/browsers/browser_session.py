@@ -10,6 +10,7 @@ from typing import Any, Dict, NamedTuple, Optional, Type, Union
 from selenium.webdriver import (
     Chrome, ChromeOptions, DesiredCapabilities, Firefox, FirefoxOptions, Ie, IeOptions, Remote
 )
+from selenium.webdriver.remote.webdriver import WebDriver
 from webdriver_manager.chrome import ChromeDriverManager
 from webdriver_manager.firefox import GeckoDriverManager
 from webdriver_manager.microsoft import IEDriverManager
@@ -70,7 +71,7 @@ class BrowserSession(Searchable, FindElementsMixin, AbstractContextManager):
     base_url: str = None
 
     @property
-    def browser(self):
+    def browser(self) -> BrowserSession:
         """Browser of browser is self XD"""
         return self  # pragma: no cover
 
@@ -178,11 +179,13 @@ class BrowserSession(Searchable, FindElementsMixin, AbstractContextManager):
         """Get current page URL"""
         return URL(self._actual.current_url, self.base_url)
 
-    def get_screenshot_as_png(self):
-        """Make new page screenshot"""
+    def get_screenshot_as_png(self) -> bytes:
+        """Capture whole browser page screenshot"""
         return self._actual.get_screenshot_as_png()
 
-    def get_actual(self):
+    capture_screenshot = get_screenshot_as_png
+
+    def get_actual(self) -> WebDriver:
         """Get browser instance"""
         return self._actual
 

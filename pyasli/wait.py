@@ -1,18 +1,8 @@
 """Condition waiting"""
-import os
 import time
-import uuid
 from typing import Callable, TypeVar
 
 T = TypeVar("T")
-
-
-def _save_screenshot(data: bytes) -> str:
-    os.makedirs("./logs", exist_ok=True)
-    path = os.path.abspath(f"./logs/{uuid.uuid4()}.png")
-    with open(path, "wb+") as out:
-        out.write(data)
-    return path
 
 
 def wait_for(element: T, condition: Callable[[T], bool], timeout=5, exception=None):
@@ -23,5 +13,5 @@ def wait_for(element: T, condition: Callable[[T], bool], timeout=5, exception=No
         if condition(element):
             return
         time.sleep(polling_time)
-    print(f"Screenshot captured on failure: {_save_screenshot(element.browser.get_screenshot_as_png())}")
-    raise exception or TimeoutError(f"Wait time has expired for condition `{condition.__name__}`")
+    message = f"Wait time has expired for condition `{condition.__name__}`"
+    raise exception or TimeoutError(message)
