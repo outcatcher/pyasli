@@ -16,9 +16,7 @@ before_deploy:
 - poetry build -f wheel
 deploy:
   provider: script
-  script: poetry publish -u __token__
-  distributions: bdist_wheel
-  skip_existing: true
+  script: poetry publish -u __token__ -p $PYPI_PASSWORD
   on:
     tags: true
 env:
