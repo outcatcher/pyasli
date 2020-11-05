@@ -14,8 +14,8 @@ def base_url():
 
 
 def in_ci():
-    """Check if test is running in gitlab-ci"""
-    return os.getenv("CI_JOB_NAME") is not None
+    """Check if test is running in travis"""
+    return os.getenv("CI") is not None
 
 
 skip_if_ci = pytest.mark.skipif(in_ci(), reason="Running in CI")
