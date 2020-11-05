@@ -1,10 +1,11 @@
 """Element wrapper tests"""
+import time
 
 import pytest
 
 from pyasli.browsers import BrowserSession
 from pyasli.bys import by_css
-from pyasli.conditions import exist, hidden, visible
+from pyasli.conditions import exist, hidden, text_is, visible
 from pyasli.elements.elements import Element
 
 
@@ -17,11 +18,10 @@ def test_caching(browser):
 def test_after_refresh(browser):
     browser.open("/disappearing_elements")
     element1 = browser.element("div.example p")
-    e_text1 = element1.get_actual().text
+    before = element1.text
     browser.open("http://google.com")
     browser.open("/disappearing_elements")
-    e_text2 = element1.get_actual().text
-    assert e_text1 == e_text2
+    element1.should(text_is(before))
 
 
 def test_not_existing(browser):
