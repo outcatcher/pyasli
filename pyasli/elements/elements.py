@@ -19,6 +19,8 @@ from pyasli.exceptions import NoBrowserException, Screenshotable, screenshot_on_
 from pyasli.wait import wait_for
 
 
+# pylint: disable=fixme
+
 @wrapt.decorator
 def _stale_retry(wrapped, instance: Element = None, args=None, kwargs=None):
     try:
@@ -27,8 +29,6 @@ def _stale_retry(wrapped, instance: Element = None, args=None, kwargs=None):
         instance.__cached__ = None  # invalidate cache
         return wrapped(*args, **kwargs)
 
-
-# pylint: disable=fixme
 
 @wrapt.decorator
 def _should_exist(wrapped, instance: Element = None, args=(), kwargs=None):
@@ -88,9 +88,7 @@ class Element(Searchable, FindElementsMixin, Screenshotable):
         """Get element, check if it's cached or already dead"""
         if self.browser.get_actual() is None:
             raise NoBrowserException
-        if self.__cached__ is None:
-            self.__cached__ = self._search()
-        return self.__cached__
+        return super().get_actual()
 
     @_stale_retry
     @_should_exist
