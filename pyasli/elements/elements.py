@@ -194,7 +194,11 @@ class Element(Searchable, FindElementsMixin, Screenshotable):
     def enabled(self):
         """Return element enabled state"""
         _enabled = self.get_actual().is_enabled()
-        _disabled = self.get_attribute("disabled") or self.get_attribute("aria-disabled")
+        _disabled = (
+                _not_noney(self.get_attribute("disabled"))
+                or
+                _not_noney(self.get_attribute("aria-disabled"))
+        )
         return _enabled and not _disabled
 
     @property
@@ -292,3 +296,7 @@ class ElementCollection(Searchable, FindElementsMixin, Sequence):  # pylint: dis
             if len(matching) == full_length:
                 return
         raise exception(f"{full_length - len(matching)} elements are not matching condition")
+
+
+def _not_noney(val):
+    return str(val).lower() != 'none'
