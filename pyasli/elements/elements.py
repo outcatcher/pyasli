@@ -5,7 +5,7 @@ import time
 from typing import Callable, Sequence, Union
 
 import wrapt
-from selenium.common.exceptions import NoSuchElementException, WebDriverException
+from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException, WebDriverException
 from selenium.webdriver import ActionChains
 from selenium.webdriver.remote.webelement import WebElement
 
@@ -20,6 +20,15 @@ from pyasli.wait import wait_for
 
 
 # pylint: disable=fixme
+
+@wrapt.decorator
+def _stale_retry(wrapped, instance: Element = None, args=None, kwargs=None):
+    try:
+        return wrapped(*args, **kwargs)
+    except StaleElementReferenceException:
+        instance.__cached__ = None  # invalidate cache
+        return wrapped(*args, **kwargs)
+
 
 @wrapt.decorator
 def _should_exist(wrapped, instance: Element = None, args=(), kwargs=None):
@@ -75,26 +84,19 @@ class Element(Searchable, FindElementsMixin, Screenshotable):
 
     should_be = should
 
-    def _element_is_dead(self):
-        try:
-            _ = self.__cached__.location
-            return False
-        except WebDriverException:
-            return True
-
     def get_actual(self) -> WebElement:
         """Get element, check if it's cached or already dead"""
         if self.browser.get_actual() is None:
             raise NoBrowserException
-        if (self.__cached__ is None) or self._element_is_dead():
-            self.__cached__ = self._search()
-        return self.__cached__
+        return super().get_actual()
 
+    @_stale_retry
     @_should_exist
     def click(self):
         """Click web element"""
         self.get_actual().click()
 
+    @_stale_retry
     @_should_exist
     def double_click(self):
         """Make double click on the element"""
@@ -102,17 +104,20 @@ class Element(Searchable, FindElementsMixin, Screenshotable):
         actions.double_click(self.get_actual())
 
     @property
+    @_stale_retry
     @_should_exist
     def location(self):
         """Get current element location"""
         return self.get_actual().location
 
+    @_stale_retry
     @_should_exist
     def hover(self):
         """Hover over element"""
         actions = ActionChains(self.browser.get_actual())
         actions.move_to_element(self.get_actual()).perform()
 
+    @_stale_retry
     @_should_exist
     def right_click(self):
         """Open context menu"""
@@ -120,12 +125,14 @@ class Element(Searchable, FindElementsMixin, Screenshotable):
         actions.context_click(self.get_actual()).perform()
 
     @property
+    @_stale_retry
     @_should_exist
     def text(self) -> str:
         """Get element text"""
         return self.get_actual().text
 
     @text.setter
+    @_stale_retry
     @_should_exist
     def text(self, value: str):
         """Set element text (if possible)"""
@@ -133,6 +140,7 @@ class Element(Searchable, FindElementsMixin, Screenshotable):
         self.get_actual().send_keys(value)
 
     @property
+    @_stale_retry
     @_should_exist
     def value(self):
         """Get element @value attribute"""
@@ -140,6 +148,7 @@ class Element(Searchable, FindElementsMixin, Screenshotable):
 
     @property
     @screenshot_on_fail
+    @_stale_retry
     def visible(self):
         """Check if element is visible"""
         if not self.exists:
@@ -162,22 +171,26 @@ class Element(Searchable, FindElementsMixin, Screenshotable):
             return False
 
     @property
+    @_stale_retry
     @_should_exist
     def selected(self):
         """Return element selected state"""
         return self.get_actual().is_selected()
 
     @property
+    @_stale_retry
     @_should_exist
     def tag_name(self):
         """Get element tag name"""
         return self.get_actual().tag_name
 
+    @_stale_retry
     @_should_exist
     def get_attribute(self, name: str) -> str:
         """Get WebElement attribute value"""
         return str(self.get_actual().get_attribute(name))
 
+    @_stale_retry
     @_should_exist
     def clear(self):
         """Clear input field"""
@@ -190,6 +203,7 @@ class Element(Searchable, FindElementsMixin, Screenshotable):
     #     self.get_actual().get_property(name)
 
     @property
+    @_stale_retry
     @_should_exist
     def enabled(self):
         """Return element enabled state"""
@@ -207,6 +221,7 @@ class Element(Searchable, FindElementsMixin, Screenshotable):
         return not self.enabled
 
     @property
+    @_stale_retry
     @_should_exist
     def size(self):
         """Element size"""
