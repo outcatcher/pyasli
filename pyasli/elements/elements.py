@@ -97,6 +97,7 @@ class Element(Searchable, FindElementsMixin, Screenshotable):
     @_should_exist
     def move_to(self):
         """Scroll to the element"""
+        _ = self.get_actual().location_once_scrolled_into_view
         self._actions().move_to_element(self.get_actual()).perform()
 
     @_stale_retry
