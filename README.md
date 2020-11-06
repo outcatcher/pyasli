@@ -1,6 +1,6 @@
 ## Pyasli
-[![coverage report](https://gitlab.com/outcatcher/pyasli/badges/master/coverage.svg)](https://outcatcher.gitlab.io/pyasli/)
-[![pipeline status](https://gitlab.com/outcatcher/pyasli/badges/master/pipeline.svg)](https://gitlab.com/outcatcher/pyasli/commits/master)
+[![codecov](https://codecov.io/gh/outcatcher/pyasli/branch/master/graph/badge.svg?token=SH2I5ZB221)](https://codecov.io/gh/outcatcher/pyasli)
+[![Build Status](https://travis-ci.org/outcatcher/pyasli.svg?branch=master)](https://travis-ci.org/outcatcher/pyasli)
 [![PyPI version](https://img.shields.io/pypi/v/pyasli.svg)](https://pypi.org/project/pyasli/)
 
 ### Simple selenium python wrapper
