@@ -1,5 +1,4 @@
 """Element wrapper tests"""
-import time
 
 import pytest
 
@@ -187,3 +186,9 @@ def test_neighbours_filter(browser):
     username = browser.element("#username")
     not_input = username.neighbours(lambda e: e.tag_name == "label")
     assert len(not_input) == 1
+
+
+def test_element_move_to(browser):
+    browser.open("/large")
+    table = browser.element("#large-table")
+    table.move_to()
