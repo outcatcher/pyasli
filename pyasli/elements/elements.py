@@ -236,13 +236,9 @@ class Element(Searchable, FindElementsMixin, Screenshotable):
         """Return parent element of given one"""
         return self.element(by_xpath("./.."))
 
-    @_stale_retry
-    @_should_exist
     def element(self, by: CssSelectorOrBy) -> Element:
         return super().element(by)
 
-    @_stale_retry
-    @_should_exist
     def elements(self, by: CssSelectorOrBy) -> ElementCollection:
         return super().elements(by)
 
