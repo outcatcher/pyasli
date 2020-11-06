@@ -30,11 +30,6 @@ def _stale_retry(wrapped, instance: Element = None, args=None, kwargs=None):
         return wrapped(*args, **kwargs)
 
 
-def stale_retry(fnc):
-    """Retry actions on stale elements"""
-    return _stale_retry(fnc)
-
-
 @wrapt.decorator
 def _should_exist(wrapped, instance: Element = None, args=(), kwargs=None):
     """Check for element existence before run method
