@@ -90,39 +90,38 @@ class Element(Searchable, FindElementsMixin, Screenshotable):
             raise NoBrowserException
         return super().get_actual()
 
+    def _actions(self):
+        return ActionChains(self.browser.get_actual())
+
+    @_stale_retry
+    @_should_exist
+    def move_to(self):
+        """Scroll to the element"""
+        self._actions().move_to_element(self.get_actual()).perform()
+
     @_stale_retry
     @_should_exist
     def click(self):
         """Click web element"""
-        self.get_actual().click()
+        self._actions().click(self.get_actual()).perform()
 
     @_stale_retry
     @_should_exist
     def double_click(self):
         """Make double click on the element"""
-        actions = ActionChains(self.browser.get_actual())
-        actions.double_click(self.get_actual())
-
-    @property
-    @_stale_retry
-    @_should_exist
-    def location(self):
-        """Get current element location"""
-        return self.get_actual().location
+        self._actions().double_click(self.get_actual()).perform()
 
     @_stale_retry
     @_should_exist
     def hover(self):
         """Hover over element"""
-        actions = ActionChains(self.browser.get_actual())
-        actions.move_to_element(self.get_actual()).perform()
+        self._actions().move_to_element(self.get_actual()).perform()
 
     @_stale_retry
     @_should_exist
     def right_click(self):
         """Open context menu"""
-        actions = ActionChains(self.browser.get_actual())
-        actions.context_click(self.get_actual()).perform()
+        self._actions().context_click(self.get_actual()).perform()
 
     @property
     @_stale_retry
@@ -140,8 +139,6 @@ class Element(Searchable, FindElementsMixin, Screenshotable):
         self.get_actual().send_keys(value)
 
     @property
-    @_stale_retry
-    @_should_exist
     def value(self):
         """Get element @value attribute"""
         return self.get_attribute("value")
@@ -165,7 +162,7 @@ class Element(Searchable, FindElementsMixin, Screenshotable):
     def exists(self):
         """Check if element exists in dom"""
         try:
-            self.get_actual()
+            self._search()
             return True
         except NoSuchElementException:
             return False
