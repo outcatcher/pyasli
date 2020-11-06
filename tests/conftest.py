@@ -2,6 +2,7 @@ import os
 import time
 
 import pytest
+import requests
 
 from pyasli.browsers import BrowserSession
 from pyasli.elements.elements import Element
@@ -38,13 +39,28 @@ def single_time_browser(base_url):
         yield browser
 
 
+HUB_URL = "http://{host}:4444/wd/hub"
+
+
+def _wait_hub_available(host, timeout=5):
+    end_time = time.monotonic() + timeout
+    while time.monotonic() < end_time:
+        try:
+            requests.head(HUB_URL.format(host=host))
+            return
+        except requests.exceptions.ConnectionError:
+            time.sleep(0.2)
+    raise TimeoutError(f"Hub is not available after {timeout} seconds")
+
+
 def browser_instance(browser: str = "chrome", base_url=None) -> BrowserSession:
     """Init browser session instance"""
     instance = BrowserSession(browser, base_url)
     if in_ci():  # configure remote for CI
         _brw = os.environ.get("BROWSER")
         _host = os.environ.get("HOST")
-        instance.setup_browser(_brw.lower(), remote=True, command_executor=f"http://{_host}:4444/wd/hub")
+        _wait_hub_available(_host)
+        instance.setup_browser(_brw.lower(), remote=True, command_executor=HUB_URL.format(host=_host))
     else:
         instance.options.headless = True
     return instance

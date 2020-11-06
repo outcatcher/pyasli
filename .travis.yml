@@ -10,7 +10,7 @@ install:
 before_script:
 - docker run -d -p 4444:4444 --shm-size 2g selenium/standalone-chrome
 script:
-- poetry run pytest --cov-config .coveragerc --cov pyasli tests
+- poetry run pytest --tb=line --cov-config .coveragerc --cov pyasli tests
 - bash <(curl -s https://codecov.io/bash)
 before_deploy:
 - poetry build -f wheel
