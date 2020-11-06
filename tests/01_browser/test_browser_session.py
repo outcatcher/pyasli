@@ -10,12 +10,14 @@ from pyasli.browsers.browser_session import NoBrowserException, URL
 from tests.conftest import browser_instance, skip_if_ci, skip_if_not_ci, tags
 
 
+@skip_if_ci
 def test_open(base_url, single_time_browser):
     """No exceptions is enough here"""
     single_time_browser.open(f"{base_url}/disappearing_elements")
     single_time_browser.element("html").get_actual()
 
 
+@skip_if_ci
 def test_close_all(single_time_browser):
     """Check that all browser windows are closed"""
     single_time_browser.close_all_windows()
