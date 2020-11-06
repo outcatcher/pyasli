@@ -1,24 +1,22 @@
+dist: focal
 language: python
 python:
 - 3.8
 services: docker
 before_install:
-- curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py
-  | python -
+- pip install poetry
 install:
 - poetry install
 before_script:
 - docker run -d -p 4444:4444 --shm-size 2g selenium/standalone-chrome
 script:
-- poetry run pytest --cov-config .coveragerc --cov pyasli tests
+- poetry run pytest --tb=line --cov-config .coveragerc --cov pyasli tests
 - bash <(curl -s https://codecov.io/bash)
 before_deploy:
 - poetry build -f wheel
 deploy:
   provider: script
-  script: poetry publish -u __token__
-  distributions: bdist_wheel
-  skip_existing: true
+  script: poetry publish -u __token__ -p $PYPI_PASSWORD
   on:
     tags: true
 env:
