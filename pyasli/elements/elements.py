@@ -183,9 +183,9 @@ class Element(Searchable, FindElementsMixin, Screenshotable):
 
     @_stale_retry
     @_should_exist
-    def get_attribute(self, name: str) -> str:
+    def get_attribute(self, name: str):
         """Get WebElement attribute value"""
-        return str(self.get_actual().get_attribute(name))
+        return self.get_actual().get_attribute(name)
 
     @_stale_retry
     @_should_exist
@@ -206,9 +206,9 @@ class Element(Searchable, FindElementsMixin, Screenshotable):
         """Return element enabled state"""
         _enabled = self.get_actual().is_enabled()
         _disabled = (
-                _not_noney(self.get_attribute("disabled"))
+                self.get_attribute("disabled") is not None
                 or
-                _not_noney(self.get_attribute("aria-disabled"))
+                self.get_attribute("aria-disabled") is not None
         )
         return _enabled and not _disabled
 
@@ -235,6 +235,16 @@ class Element(Searchable, FindElementsMixin, Screenshotable):
     def parent(self):
         """Return parent element of given one"""
         return self.element(by_xpath("./.."))
+
+    @_stale_retry
+    @_should_exist
+    def element(self, by: CssSelectorOrBy) -> Element:
+        return super().element(by)
+
+    @_stale_retry
+    @_should_exist
+    def elements(self, by: CssSelectorOrBy) -> ElementCollection:
+        return super().elements(by)
 
     def ancestors(self, filter_condition: ElementCondition = None):
         """Return parent element chain from parent element to `html`"""
@@ -308,7 +318,3 @@ class ElementCollection(Searchable, FindElementsMixin, Sequence):  # pylint: dis
             if len(matching) == full_length:
                 return
         raise exception(f"{full_length - len(matching)} elements are not matching condition")
-
-
-def _not_noney(val):
-    return str(val).lower() != 'none'

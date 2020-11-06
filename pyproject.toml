@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pyasli"
-version = "0.2.7"
+version = "0.2.8b2"
 description = "(Python) Yet Another Selenium Instruments"
 authors = ["Anton Kachurin <katchuring@gmail.com>"]
 readme = "README.md"
