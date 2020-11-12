@@ -124,11 +124,8 @@ class BrowserSession(Searchable, FindElementsMixin, AbstractContextManager):
                                   **self._other_options)
             return
         driver_path = _MANAGER_MAPPING[self.browser_name]().install()
-        if browser_cls is Firefox:
-            self._actual = Firefox(executable_path=driver_path, options=self.options,
+        self._actual = browser_cls(executable_path=driver_path, options=self.options,
                                    desired_capabilities=self.desired_capabilities, **self._other_options)
-        else:
-            self._actual = browser_cls(driver_path, options=self.options, **self._other_options)
 
     def set_driver(self, webdriver: Remote):
         """Override lazy driver initialization with already initialized webdriver"""
