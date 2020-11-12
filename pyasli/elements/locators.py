@@ -3,15 +3,16 @@ from abc import ABC, abstractmethod
 from typing import Any, Callable, List, Union
 from weakref import proxy
 
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
 from selenium.webdriver.remote.webelement import WebElement
 
 from pyasli.elements.searchable import LocatorStrategy, Searchable
 
+
 # pylint: disable=protected-access
 
 
-def _search_in_context(context: Searchable, method: str, by: tuple) -> List[WebElement]:
+def _search_in_context(context: Searchable, method: str, by: tuple, _retry=True) -> List[WebElement]:
     actual = context.get_actual()
     if not isinstance(actual, list):
         actual: List[WebElement] = [actual]
@@ -19,6 +20,9 @@ def _search_in_context(context: Searchable, method: str, by: tuple) -> List[WebE
     for elem in actual:
         try:
             found = getattr(elem, method)(*by)
+        except StaleElementReferenceException:  # element in which we search can be stale itself
+            context.__cached__ = None
+            found = _search_in_context(context, method, by, False)
         except NoSuchElementException:
             continue
         if isinstance(found, list):
