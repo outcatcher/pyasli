@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import atexit
+import logging
+import os
 import re
 from contextlib import AbstractContextManager
+from logging.handlers import TimedRotatingFileHandler
 from typing import Any, Dict, NamedTuple, Optional, Type, Union
 
 from selenium.webdriver import (
@@ -18,7 +21,9 @@ from webdriver_manager.microsoft import IEDriverManager
 from pyasli.bys import CssSelectorOrBy
 from pyasli.elements.elements import Element, ElementCollection, FindElementsMixin
 from pyasli.elements.searchable import LocatorStrategy, Searchable
-from pyasli.exceptions import NoBrowserException
+from pyasli.exceptions import NoBrowserException, Screenshotable
+
+LOG_FMT = '%(asctime)s - %(name)s - [%(levelname)s] %(message)s'
 
 _BROWSER_MAPPING: Dict[str, Type[Remote]] = {
     "chrome": Chrome,
@@ -58,7 +63,7 @@ class BrowserLocatorStrategy(LocatorStrategy):
         super().__init__(None, browser_session)
 
 
-class BrowserSession(Searchable, FindElementsMixin, AbstractContextManager):
+class BrowserSession(Searchable, FindElementsMixin, AbstractContextManager, Screenshotable):
     """Lazy webdriver wrapper"""
 
     _actual: Optional[Remote] = None
@@ -67,6 +72,7 @@ class BrowserSession(Searchable, FindElementsMixin, AbstractContextManager):
     options = None
     desired_capabilities = None
     _other_options: dict = None
+    logger: logging.Logger = None
 
     base_url: str = None
 
@@ -79,14 +85,40 @@ class BrowserSession(Searchable, FindElementsMixin, AbstractContextManager):
         if self._actual is None:
             raise NoBrowserException("You should open some page before doing anything")
 
-    def __init__(self, browser="chrome", base_url=None):
+    def __init__(self, browser="chrome", base_url=None, log_path="./log"):
         """Init new lazy browser session.
         Setup browser to be used to given local headless browser
         """
         super().__init__(BrowserLocatorStrategy(self))
         self.setup_browser(browser)
         self.base_url = base_url
+        # setup logging
+        self._log_path = log_path
+        self.logger = self._setup_logger()
+
         atexit.register(self.close_all_windows)
+
+    def _setup_logger(self):
+        logger = logging.getLogger(f'{__name__}.{self.browser_name}')
+        logger.setLevel(logging.DEBUG)
+        logger.propagate = True
+        if not logger.hasHandlers():
+            os.makedirs(self._log_path, exist_ok=True)
+            file_handler = TimedRotatingFileHandler(
+                f'{self._log_path}/{self.browser_name}.log',
+                backupCount=2,
+                utc=True,
+                when='D'
+            )
+            file_handler.setLevel(logging.DEBUG)
+            fmt = logging.Formatter(LOG_FMT)
+            file_handler.setFormatter(fmt)
+            logger.addHandler(file_handler)
+        return logger
+
+    @property
+    def log_path(self):
+        return self._log_path
 
     def setup_browser(self, browser: str, remote=False, headless=True,
                       options: Union[ChromeOptions, FirefoxOptions, IeOptions] = None,
@@ -118,6 +150,7 @@ class BrowserSession(Searchable, FindElementsMixin, AbstractContextManager):
         """Start new browser instance"""
         if self._actual is not None:
             return
+        self.logger.debug('Starting %s ', self.browser_name)
         browser_cls = _BROWSER_MAPPING[self.browser_name]
         if browser_cls is Remote:
             self._actual = Remote(desired_capabilities=self.desired_capabilities, options=self.options,
@@ -129,7 +162,9 @@ class BrowserSession(Searchable, FindElementsMixin, AbstractContextManager):
 
     def set_driver(self, webdriver: Remote):
         """Override lazy driver initialization with already initialized webdriver"""
+        self.logger.debug('Set driver to %s ', webdriver)
         if self._actual is not None:
+            self.logger.debug('Driver already running, quit first')
             self._actual.quit()
         self._actual = webdriver
 
@@ -141,14 +176,17 @@ class BrowserSession(Searchable, FindElementsMixin, AbstractContextManager):
             if not url.startswith("/"):
                 url = f"/{url}"
             url = f"{self.base_url}{url}"
+        self.logger.debug('Open page at "%s"', url)
         self._actual.get(url)
 
     def element(self, by: CssSelectorOrBy) -> Element:
         """Find single element by locator (css selector by default)"""
+        # pylint: disable=useless-super-delegation
         return super().element(by)
 
     def elements(self, by: CssSelectorOrBy) -> ElementCollection:
         """Find single element by locator (css selector by default)"""
+        # pylint: disable=useless-super-delegation
         return super().elements(by)
 
     def add_cookie(self, cookie_dict: dict):
@@ -158,6 +196,7 @@ class BrowserSession(Searchable, FindElementsMixin, AbstractContextManager):
 
     def close_window(self):
         """Close current browser window"""
+        self.logger.debug('Closing current browser window')
         self._check_running()
         self._actual.close()
 
@@ -166,6 +205,7 @@ class BrowserSession(Searchable, FindElementsMixin, AbstractContextManager):
 
     def close_all_windows(self):
         """Close all browser windows"""
+        self.logger.debug('Closing current all browser windows and quitting')
         actual = self._actual
         if actual is not None:
             actual.quit()
