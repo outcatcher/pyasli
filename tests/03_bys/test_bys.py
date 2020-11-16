@@ -1,15 +1,4 @@
-import random
-import string
-
-import pytest
-
 from pyasli.bys import *
-
-
-@pytest.fixture
-def random_string():
-    """Generate 10 char random string"""
-    return "".join(random.choice(string.ascii_letters) for _ in range(10))
 
 
 def test_by_css(random_string):

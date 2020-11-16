@@ -1,4 +1,6 @@
 import os
+import random
+import string
 import time
 
 import pytest
@@ -143,3 +145,9 @@ class ElementMock(Element):
 def element() -> ElementMock:
     # noinspection PyTypeChecker
     return ElementMock()
+
+
+@pytest.fixture
+def random_string():
+    """Generate 10 char random string"""
+    return "".join(random.choice(string.ascii_letters) for _ in range(10))
