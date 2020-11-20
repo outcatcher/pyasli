@@ -85,36 +85,41 @@ class BrowserSession(Searchable, FindElementsMixin, AbstractContextManager, Scre
         if self._actual is None:
             raise NoBrowserException("You should open some page before doing anything")
 
-    def __init__(self, browser="chrome", base_url=None, log_path="./log"):
-        """Init new lazy browser session.
-        Setup browser to be used to given local headless browser
+    def __init__(self, browser="chrome", base_url=None, log_path="./logs", log_level=logging.DEBUG):
+        """Init new lazy browser session
+
+        :param str browser: Browser used in the session
+        :param str | None base_url: Base URL of tested website, if any
+        :param str log_path: Path to log file directory. Screenshots will be stored here.
+        :param int | None log_level: Level of used logger or `None` for no logging.
         """
         super().__init__(BrowserLocatorStrategy(self))
         self.setup_browser(browser)
         self.base_url = base_url
         # setup logging
         self._log_path = log_path
-        self.logger = self._setup_logger()
+        self.logger = logging.getLogger(f'{__name__}.{self.browser_name}')
+        self._setup_logger(log_level)
 
         atexit.register(self.close_all_windows)
 
-    def _setup_logger(self):
-        logger = logging.getLogger(f'{__name__}.{self.browser_name}')
-        logger.setLevel(logging.DEBUG)
-        logger.propagate = True
-        if not logger.hasHandlers():
-            os.makedirs(self._log_path, exist_ok=True)
-            file_handler = TimedRotatingFileHandler(
-                f'{self._log_path}/{self.browser_name}.log',
-                backupCount=2,
-                utc=True,
-                when='D'
-            )
-            file_handler.setLevel(logging.DEBUG)
-            fmt = logging.Formatter(LOG_FMT)
-            file_handler.setFormatter(fmt)
-            logger.addHandler(file_handler)
-        return logger
+    def _setup_logger(self, level):
+        if level is None:
+            return
+        self.logger.setLevel(level)
+        if self.logger.hasHandlers():
+            return
+        os.makedirs(self._log_path, exist_ok=True)
+        file_handler = TimedRotatingFileHandler(
+            f'{self._log_path}/{self.browser_name}.log',
+            backupCount=2,
+            utc=True,
+            when='D'
+        )
+        file_handler.setLevel(logging.DEBUG)
+        fmt = logging.Formatter(LOG_FMT)
+        file_handler.setFormatter(fmt)
+        self.logger.addHandler(file_handler)
 
     @property
     def log_path(self):
