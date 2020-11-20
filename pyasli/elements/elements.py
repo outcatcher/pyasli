@@ -92,7 +92,7 @@ class Element(Searchable, FindElementsMixin, Screenshotable):
     def get_actual(self) -> WebElement:
         """Get element, check if it's cached or already dead"""
         if self.browser.get_actual() is None:
-            raise NoBrowserException
+            raise NoBrowserException("No browser exist")
         return super().get_actual()
 
     def _actions(self):

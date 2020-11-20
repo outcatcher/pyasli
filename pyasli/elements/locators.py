@@ -30,7 +30,7 @@ def _search_in_context(context: Searchable, method: str, by: tuple, _retry=True)
         else:
             result.append(found)
     if not result:
-        raise NoSuchElementException
+        raise NoSuchElementException(f"Nothing found using locator {by}")
     return result
 
 
