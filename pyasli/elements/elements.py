@@ -76,8 +76,12 @@ class Element(Searchable, FindElementsMixin, Screenshotable):
     @screenshot_on_fail
     def __wait_for_condition(self, condition, timeout, exception_cls):
         exception = exception_cls(f"Condition {condition.__name__} is not reached in {timeout} seconds for {self}")
-        wait_for(self, condition, timeout, exception)
-        self.browser.logger.debug('Condition %s reached for element %s', condition.__name__, self)
+        try:
+            wait_for(self, condition, timeout, exception)
+        except Exception:
+            self.browser.logger.exception("Waiting for condition failed")
+            raise
+        self.browser.logger.debug("Condition %s reached for element %s", condition.__name__, self)
 
     def assure(self, condition, timeout=5):
         """Make sure that element matches condition or raises :class:`TimeoutError`"""
