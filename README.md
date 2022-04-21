@@ -20,9 +20,9 @@ assert element1.get_actual() is element1.get_actual(), "Element is found 2 times
 
 ##### Use exact driver (can be used as context manager):
 ```python
-from tests.conftest import browser_instance
+from pyasli.browsers import BrowserSession
 
-with browser_instance(base_url="https://the-internet.herokuapp.com") as browser:
+with BrowserSession("chrome", base_url="https://the-internet.herokuapp.com") as browser:
     browser.open("/disappearing_elements")
     element1 = browser.element("div.example p")
     assert element1.get_actual() is element1.get_actual(), "Element is found 2 times"
