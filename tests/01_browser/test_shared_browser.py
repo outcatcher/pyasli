@@ -11,8 +11,8 @@ from tests.conftest import in_ci, skip_if_ci, skip_if_not_ci
 @pytest.fixture
 def patch_browser():  # prepare driver for CI
     if in_ci():  # configure remote for CI
-        _brw = os.environ.get("BROWSER")
-        _host = os.environ.get("HOST")
+        _brw = os.getenv("BROWSER")
+        _host = os.getenv("HOST")
         browser.setup_browser(_brw.lower(), remote=True, command_executor=f"http://{_host}:4444/wd/hub")
     else:
         browser.options.headless = True

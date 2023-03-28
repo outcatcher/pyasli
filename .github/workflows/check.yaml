@@ -46,5 +46,6 @@ jobs:
           poetry run pytest --tb=line --cov-config .coveragerc --cov pyasli tests
         env:
           HOST: "localhost"
+          BROWSER: "chrome"
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
