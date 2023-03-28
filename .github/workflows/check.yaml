@@ -8,14 +8,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      - name: Install poetry
+        run: pipx install poetry
       - name: Set up Python 3.10
         uses: actions/setup-python@v4
         with:
           python-version: "3.10"
+          cache: "poetry"
       - name: Run Pylint
         run: |
-          pip install pylint
-          pylint pyasli --exit-zero
+          poetry run pylint pyasli
 
   test:
     runs-on: ubuntu-latest
