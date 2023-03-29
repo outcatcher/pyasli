@@ -13,6 +13,9 @@ from pyasli.elements.elements import Element
 @pytest.fixture(scope="session")
 def base_url():
     """Return site test server base URL"""
+    if target_port := os.getenv("LOCAL_PORT"):
+        return f"http://localhost:{target_port}"
+
     return "https://the-internet.herokuapp.com"
 
 
