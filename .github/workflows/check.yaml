@@ -24,11 +24,6 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
-    services:
-      selenuim:
-        image: selenium/standalone-chrome
-        ports:
-          - 4444:4444
     steps:
       - uses: actions/checkout@v3
       - name: Install poetry
@@ -38,6 +33,17 @@ jobs:
         with:
           python-version: "3.10"
           cache: "poetry"
+      - name: Pull chrome image
+        run: |
+          docker buildx pull selenoid/chrome:latest
+      - name: Run selenoid
+        run: |
+          docker run -d                                   \
+          --name selenoid                                 \
+          -p 4444:4444                                    \
+          -v /var/run/docker.sock:/var/run/docker.sock    \
+          -v $(pwd)/.selenoid/:/etc/selenoid/:ro              \
+          aerokube/selenoid:latest-release
       - name: Install dependencies
         run: |
           poetry install

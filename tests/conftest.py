@@ -16,6 +16,13 @@ def base_url():
     return "https://the-internet.herokuapp.com"
 
 
+@pytest.fixture(scope="module")
+def browser(base_url):
+    brw = browser_instance(base_url=base_url)
+    yield brw
+    brw.close_all_windows()
+
+
 def in_ci():
     """Check if test is running in travis"""
     return os.getenv("CI") is not None
@@ -25,20 +32,12 @@ skip_if_ci = pytest.mark.skipif(in_ci(), reason="Running in CI")
 skip_if_not_ci = pytest.mark.skipif(not in_ci(), reason="Running not in CI")
 
 
-@pytest.fixture(scope="module")
-def browser(base_url):
-    with browser_instance() as browser:
-        browser.base_url = base_url
-        browser.open("/broken_images")
-        yield browser
-
-
 @pytest.fixture
 def single_time_browser(base_url):
-    with browser_instance() as browser:
-        browser.base_url = base_url
-        browser.open("/broken_images")
-        yield browser
+    brw = browser_instance(base_url=base_url)
+    brw.open("/broken_images")
+    yield brw
+    brw.close_all_windows()
 
 
 HUB_URL = "http://{host}:4444/wd/hub"
@@ -52,7 +51,7 @@ def _wait_hub_available(host, timeout=5):
             return
         except requests.exceptions.ConnectionError:
             time.sleep(0.2)
-    raise TimeoutError(f"Hub is not available after {timeout} seconds")
+    raise TimeoutError(f"Hub at {HUB_URL.format(host=host)} is not available after {timeout} seconds")
 
 
 def browser_instance(browser: str = "chrome", base_url=None) -> BrowserSession:

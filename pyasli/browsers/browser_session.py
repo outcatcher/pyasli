@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import atexit
 import logging
 import os
 import re
@@ -101,8 +100,6 @@ class BrowserSession(Searchable, FindElementsMixin, AbstractContextManager, Scre
         self.logger = logging.getLogger(f'{__name__}.{self.browser_name}')
         self._setup_logger(log_level)
 
-        atexit.register(self.close_all_windows)
-
     def _setup_logger(self, level):
         if level is None:
             return
@@ -125,7 +122,7 @@ class BrowserSession(Searchable, FindElementsMixin, AbstractContextManager, Scre
     def log_path(self):
         return self._log_path
 
-    def setup_browser(self, browser: str, remote=False, headless=True,
+    def setup_browser(self, browser: str, remote=False, headless=False,
                       options: Union[ChromeOptions, FirefoxOptions, IeOptions] = None,
                       desired_capabilities: DesiredCapabilities = None,
                       **other_options):
@@ -147,7 +144,6 @@ class BrowserSession(Searchable, FindElementsMixin, AbstractContextManager, Scre
             self.options = options
         if options is None:
             self.options = _OPTIONS_MAPPING[browser]()
-            self.options.headless = headless
         self.desired_capabilities = desired_capabilities
         self._other_options = other_options
 
@@ -206,14 +202,17 @@ class BrowserSession(Searchable, FindElementsMixin, AbstractContextManager, Scre
         self._actual.close()
 
     def __exit__(self, exc_type, exc_value, traceback):
-        self.close_all_windows()
+        try:
+            self.close_window()
+        except NoBrowserException:
+            pass
 
     def close_all_windows(self):
         """Close all browser windows"""
         self.logger.debug('Closing current all browser windows and quitting')
-        actual = self._actual
-        if actual is not None:
-            actual.quit()
+
+        if self._actual is not None:
+            self._actual.quit()
             self._actual = None
 
     @property
@@ -223,12 +222,15 @@ class BrowserSession(Searchable, FindElementsMixin, AbstractContextManager, Scre
 
     def get_screenshot_as_png(self) -> bytes:
         """Capture whole browser page screenshot"""
+        self.get_actual()
         return self._actual.get_screenshot_as_png()
 
     capture_screenshot = get_screenshot_as_png
 
     def get_actual(self) -> WebDriver:
         """Get browser instance"""
+        if self._actual is None:
+            raise NoBrowserException("No browser is started")
         return self._actual
 
 

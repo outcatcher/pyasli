@@ -18,6 +18,9 @@ def _search_in_context(context: Searchable, method: str, by: tuple, _retry=True)
         actual: List[WebElement] = [actual]
     result = []
     for elem in actual:
+        if elem is None:
+            continue
+
         try:
             found = getattr(elem, method)(*by)
         except StaleElementReferenceException:  # element in which we search can be stale itself
