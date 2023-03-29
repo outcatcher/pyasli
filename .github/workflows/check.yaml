@@ -57,7 +57,8 @@ jobs:
           HOST: "localhost"
           BROWSER: "chrome"
           CI: "1"
-          LOCAL_PORT: 7080
+          TARGET_HOST: "test-internet"
+          TARGET_PORT: 7080
         run: |
           poetry run pytest -v --tb=line --cov-report xml --cov-config .coveragerc --cov pyasli tests
       - name: Upload coverage reports to Codecov
