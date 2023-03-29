@@ -35,7 +35,7 @@ jobs:
           cache: "poetry"
       - name: Pull chrome image
         run: |
-          docker buildx pull selenoid/chrome:latest
+          docker pull selenoid/chrome:latest
       - name: Run selenoid
         run: |
           docker run -d                                   \
