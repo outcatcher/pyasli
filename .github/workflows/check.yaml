@@ -48,11 +48,11 @@ jobs:
         run: |
           poetry install
       - name: Run tests
-        run: |
-          poetry run pytest -v --tb=line --cov-config .coveragerc --cov pyasli tests
         env:
           HOST: "localhost"
           BROWSER: "chrome"
           CI: "1"
+        run: |
+          poetry run pytest -v --tb=line --cov-report xml --cov-config .coveragerc --cov pyasli tests
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
