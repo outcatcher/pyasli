@@ -52,6 +52,10 @@ jobs:
       - name: Install dependencies
         run: |
           poetry install
+      - name: Show docker infrastructure
+        run: |
+          docker ps
+          docker network ls
       - name: Run tests
         env:
           HOST: "localhost"
