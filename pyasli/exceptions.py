@@ -50,6 +50,11 @@ def screenshot_on_fail(wrapped, instance: Screenshotable = None, args=None, kwar
             warnings.warn(f'`capture_screenshot` method is missing for {instance}.'
                           'No screenshot can be captured')
             raise sc_e
-        img_path = _save_screenshot(instance.capture_screenshot(), instance.log_path)
-        LOGGER.exception("Screenshot captured on failure: %s", img_path)
+
+        try:
+            img_path = _save_screenshot(instance.capture_screenshot(), instance.log_path)
+            LOGGER.exception("Screenshot captured on failure: %s", img_path)
+        except NoBrowserException:
+            pass
+
         raise sc_e

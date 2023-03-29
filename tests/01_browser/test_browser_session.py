@@ -28,9 +28,8 @@ def test_close_all_not_started():
     brw.close_all_windows()
 
 
-def test_closed_with_context():
-    with browser_instance() as brw:
-        brw.close_all_windows()
+def test_closed_with_context(single_time_browser):
+    single_time_browser.close_all_windows()
 
 
 def test_close_all_reopen(single_time_browser):
@@ -45,11 +44,10 @@ def test_close_single(single_time_browser):
         single_time_browser.element("html").get_actual()
 
 
-def test_no_open_page():
-    with browser_instance() as browser:
-        el = browser.element("html")
-        with pytest.raises(NoBrowserException):
-            el.get_actual()
+def test_no_open_page(browser):
+    el = browser.element("html")
+    with pytest.raises(NoBrowserException):
+        el.get_actual()
 
 
 @tags("chrome")
@@ -85,20 +83,18 @@ def test_remote(base_url):
         assert isinstance(browser.options, ChromeOptions)
 
 
-def test_url_check(single_time_browser, base_url):
-    """No exceptions is enough here"""
-    with browser_instance(base_url=base_url) as browser:
-        url = "/disappearing_elements"
-        browser.open(url)
-        assert browser.url == f"{base_url}{url}"
+def test_url_check(base_url, browser):
+    """Having no exceptions is enough here"""
+    url = "/disappearing_elements"
+    browser.open(url)
+    assert browser.url == f"{base_url}{url}"
 
 
-def test_url_ne_check(single_time_browser, base_url):
-    """No exceptions is enough here"""
-    with browser_instance(base_url=base_url) as browser:
-        url = "/disappearing_elements"
-        browser.open(url)
-        assert browser.url != f"{base_url}/.../{url}"
+def test_url_ne_check(base_url, browser):
+    """Having no exceptions is enough here"""
+    url = "/disappearing_elements"
+    browser.open(url)
+    assert browser.url != f"{base_url}/.../{url}"
 
 
 @tags("firefox")

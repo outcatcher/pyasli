@@ -1,0 +1,58 @@
+name: Check
+
+on: [push]
+
+jobs:
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install poetry
+        run: pipx install poetry
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+          cache: "poetry"
+      - name: Install dependencies
+        run: |
+          poetry install
+      - name: Run Pylint
+        run: |
+          poetry run pylint pyasli --exit-zero
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install poetry
+        run: pipx install poetry
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+          cache: "poetry"
+      - name: Pull chrome image
+        run: |
+          docker pull selenoid/chrome:latest
+      - name: Run selenoid
+        run: |
+          docker run -d                                   \
+          --name selenoid                                 \
+          -p 4444:4444                                    \
+          -v /var/run/docker.sock:/var/run/docker.sock    \
+          -v $(pwd)/.selenoid/:/etc/selenoid/:ro              \
+          aerokube/selenoid:latest-release
+      - name: Install dependencies
+        run: |
+          poetry install
+      - name: Run tests
+        run: |
+          poetry run pytest -v --tb=line --cov-config .coveragerc --cov pyasli tests
+        env:
+          HOST: "localhost"
+          BROWSER: "chrome"
+          CI: "1"
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3

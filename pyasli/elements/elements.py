@@ -23,6 +23,9 @@ from pyasli.wait import wait_for
 
 @wrapt.decorator
 def _stale_retry(wrapped, instance: Element = None, args=None, kwargs=None):
+    if instance is None:
+        instance = args[0]
+
     try:
         return wrapped(*args, **kwargs)
     except StaleElementReferenceException:
@@ -154,7 +157,6 @@ class Element(Searchable, FindElementsMixin, Screenshotable):
         return self.get_attribute("value")
 
     @property
-    @screenshot_on_fail
     @_stale_retry
     def visible(self):
         """Check if element is visible"""
@@ -270,7 +272,7 @@ class Element(Searchable, FindElementsMixin, Screenshotable):
         """Capture single element screenshot"""
         try:
             return self.get_actual().screenshot_as_png
-        except WebDriverException:  # if get_actual has failed
+        except WebDriverException as wde:  # if get_actual has failed
             return self.browser.capture_screenshot()
 
     def __repr__(self):
@@ -278,6 +280,10 @@ class Element(Searchable, FindElementsMixin, Screenshotable):
 
     def __getattr__(self, item) -> str:
         """Return value of element attribute with given name as string"""
+        if item in dir(self):
+            prop = type(self).__getattribute__(self, item)
+            raise AttributeError(f"Some shit here: {prop}")
+
         return self.get_attribute(item)
 
 
