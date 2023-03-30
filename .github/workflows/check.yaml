@@ -27,8 +27,6 @@ jobs:
     services:
       the-internet:
         image: "gprestes/the-internet:v2.6.5"
-        ports:
-          - 7080:5000
     steps:
       - uses: actions/checkout@v3
       - name: Install poetry
@@ -63,7 +61,7 @@ jobs:
           BROWSER: "chrome"
           CI: "1"
           TARGET_HOST: "the-internet"
-          TARGET_PORT: 7080
+          TARGET_PORT: 5000
         run: |
           poetry run pytest -v --tb=line --cov-report xml --cov-config .coveragerc --cov pyasli tests
       - name: Upload coverage reports to Codecov
