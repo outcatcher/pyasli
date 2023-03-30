@@ -40,30 +40,26 @@ jobs:
         run: |
           docker pull selenoid/chrome:latest
       - name: Run selenoid
-        run: |
-          docker run -d                                   \
-          --network ${{ job.services.the-internet.network }} \
-          --network bridge \
-          --name selenoid                                 \
-          -p 4444:4444                                    \
-          -v /var/run/docker.sock:/var/run/docker.sock    \
-          -v $(pwd)/.selenoid/:/etc/selenoid/:ro              \
+        run: >
+          docker run -d
+          --network ${{ job.services.the-internet.network }}
+          --name selenoid
+          -p 4444:4444
+          -v /var/run/docker.sock:/var/run/docker.sock
+          -v $(pwd)/.selenoid/:/etc/selenoid/:ro
           aerokube/selenoid:latest-release
       - name: Install dependencies
         run: |
           poetry install
-      - name: Show docker infrastructure
-        run: |
-          docker ps
-          docker network ls
       - name: Run tests
         env:
-          HOST: "localhost"
           BROWSER: "chrome"
           CI: "1"
           TARGET_HOST: "the-internet"
           TARGET_PORT: 5000
         run: |
+          export HOST=$(docker inspect selenoid | jq -r '.[0].NetworkSettings.Networks.${{ job.services.the-internet.network }}.IPAddress')
+          echo With selenoid on $HOST
           poetry run pytest -v --tb=line --cov-report xml --cov-config .coveragerc --cov pyasli tests
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
