@@ -2,24 +2,29 @@
 from __future__ import annotations
 
 import time
-from typing import Callable, Sequence, Union
+from collections.abc import Callable, Sequence
+from typing import TYPE_CHECKING
 
 import wrapt
 from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException, WebDriverException
 from selenium.webdriver import ActionChains
-from selenium.webdriver.remote.webelement import WebElement
 
 from pyasli.bys import ByLocator, CssSelectorOrBy, by_css, by_xpath
 from pyasli.elements.locators import (
-    FilteredCollectionLocator, FindElementLocator, IndexElementLocator, MultipleElementLocator,
-    SingleElementLocator, SlicedElementLocator
+    FilteredCollectionLocator,
+    FindElementLocator,
+    IndexElementLocator,
+    MultipleElementLocator,
+    SingleElementLocator,
+    SlicedElementLocator,
 )
 from pyasli.elements.searchable import Searchable
 from pyasli.exceptions import NoBrowserException, Screenshotable, screenshot_on_fail
 from pyasli.wait import wait_for
 
+if TYPE_CHECKING:
+    from selenium.webdriver.remote.webelement import WebElement
 
-# pylint: disable=fixme
 
 @wrapt.decorator
 def _stale_retry(wrapped, instance: Element = None, args=None, kwargs=None):
@@ -175,9 +180,10 @@ class Element(Searchable, FindElementsMixin, Screenshotable):
         """Check if element exists in dom"""
         try:
             self._search()
-            return True
         except NoSuchElementException:
             return False
+
+        return True
 
     @property
     @_stale_retry
@@ -209,7 +215,6 @@ class Element(Searchable, FindElementsMixin, Screenshotable):
     # @_should_exit
     # def get_property(self, name):
     #     """Gets the given property of the element"""
-    #     self.get_actual().get_property(name)
 
     @property
     @_stale_retry
@@ -240,7 +245,6 @@ class Element(Searchable, FindElementsMixin, Screenshotable):
     # @_should_exit
     # def value_of_css_property(self, name):
     #     """Returns value css property"""
-    #     return self.get_actual().value_of_css_property(name)
 
     @property
     @_should_exist
@@ -272,7 +276,7 @@ class Element(Searchable, FindElementsMixin, Screenshotable):
         """Capture single element screenshot"""
         try:
             return self.get_actual().screenshot_as_png
-        except WebDriverException as wde:  # if get_actual has failed
+        except WebDriverException:  # if get_actual has failed
             return self.browser.capture_screenshot()
 
     def __repr__(self):
@@ -298,7 +302,7 @@ class ElementCollection(Searchable, FindElementsMixin, Sequence):  # pylint: dis
     def __init__(self, locator: MultipleElementLocator):  # all hail type hints
         super().__init__(locator)
 
-    def __getitem__(self, index: Union[int, slice]) -> Union[Element, ElementCollection]:
+    def __getitem__(self, index: int | slice) -> Element | ElementCollection:
         if isinstance(index, slice):
             return ElementCollection(SlicedElementLocator(self._locator, index))
         length = len(self)
@@ -312,7 +316,7 @@ class ElementCollection(Searchable, FindElementsMixin, Sequence):  # pylint: dis
     def __repr__(self):
         return f"Element Collection by: {repr(self._locator)}"
 
-    def filter(self, condition: Callable[[Element], bool]):
+    def filter(self, condition: Callable[[Element], bool]):  # noqa: A003
         """Filter list of collection elements filtered by condition applied to `Element`"""
         return ElementCollection(FilteredCollectionLocator(self, condition))
 

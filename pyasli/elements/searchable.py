@@ -2,12 +2,12 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Any, List, Tuple, Union
+from typing import Any, Union
 
 from selenium.webdriver import Remote
 from selenium.webdriver.remote.webelement import WebElement
 
-Wrapped = Union[WebElement, List[WebElement], Remote]
+Wrapped = Union[WebElement, list[WebElement], Remote]
 BROWSER = "Browser"
 
 
@@ -31,12 +31,16 @@ class Searchable(ABC):
         return self._locator.get()
 
     @property
+    def locator(self):
+        return self._locator
+
+    @property
     def browser(self):
         """Return used browser instance"""
         # pylint: disable=protected-access
         parent_locator = self._locator
         while not parent_locator.context.__is_browser__:
-            parent_locator = parent_locator.context._locator
+            parent_locator = parent_locator.context.locator
         return parent_locator.context
 
 
@@ -45,7 +49,7 @@ class LocatorStrategy(ABC):
 
     context: Searchable
 
-    def __init__(self, by: Tuple[str, str], context: Searchable):
+    def __init__(self, by: tuple[str, str], context: Searchable):
         self.context = context
         self.by = by
 

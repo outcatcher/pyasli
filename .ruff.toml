@@ -1,0 +1,14 @@
+select = ["ALL"]
+
+ignore = [
+    "ANN", # type annotations
+    "D", # doc strings
+    "PTH", # path package
+    "TRY201", # ignore defining error message on reraise
+    "TRY003", # long messages in exception
+    "EM101", # Exception must not use a string literal, assign to variable first
+    "EM102", # fstrings in exception
+    "FBT002", # Boolean default value in function definition
+]
+
+line-length = 120

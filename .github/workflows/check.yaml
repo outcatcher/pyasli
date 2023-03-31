@@ -20,7 +20,7 @@ jobs:
           poetry install
       - name: Run Pylint
         run: |
-          poetry run pylint pyasli --exit-zero
+          poetry run ruff pyasli
 
   test:
     runs-on: ubuntu-latest
