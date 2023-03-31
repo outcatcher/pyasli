@@ -2,29 +2,40 @@
 
 from __future__ import annotations
 
+import contextlib
 import logging
 import os
 import re
 from contextlib import AbstractContextManager
 from logging.handlers import TimedRotatingFileHandler
-from typing import Any, Dict, NamedTuple, Optional, Type, Union
+from typing import TYPE_CHECKING, Any, NamedTuple
 
 from selenium.webdriver import (
-    Chrome, ChromeOptions, DesiredCapabilities, Firefox, FirefoxOptions, Ie, IeOptions, Remote
+    Chrome,
+    ChromeOptions,
+    DesiredCapabilities,
+    Firefox,
+    FirefoxOptions,
+    Ie,
+    IeOptions,
+    Remote,
 )
-from selenium.webdriver.remote.webdriver import WebDriver
 from webdriver_manager.chrome import ChromeDriverManager
 from webdriver_manager.firefox import GeckoDriverManager
 from webdriver_manager.microsoft import IEDriverManager
 
-from pyasli.bys import CssSelectorOrBy
 from pyasli.elements.elements import Element, ElementCollection, FindElementsMixin
 from pyasli.elements.searchable import LocatorStrategy, Searchable
 from pyasli.exceptions import NoBrowserException, Screenshotable
 
-LOG_FMT = '%(asctime)s - %(name)s - [%(levelname)s] %(message)s'
+if TYPE_CHECKING:
+    from selenium.webdriver.remote.webdriver import WebDriver
 
-_BROWSER_MAPPING: Dict[str, Type[Remote]] = {
+    from pyasli.bys import CssSelectorOrBy
+
+LOG_FMT = "%(asctime)s - %(name)s - [%(levelname)s] %(message)s"
+
+_BROWSER_MAPPING: dict[str, type[Remote]] = {
     "chrome": Chrome,
     "ie": Ie,
     "firefox": Firefox,
@@ -65,7 +76,7 @@ class BrowserLocatorStrategy(LocatorStrategy):
 class BrowserSession(Searchable, FindElementsMixin, AbstractContextManager, Screenshotable):
     """Lazy webdriver wrapper"""
 
-    _actual: Optional[Remote] = None
+    _actual: Remote | None = None
     __is_browser__ = True
     browser_name: str = None
     options = None
@@ -97,7 +108,7 @@ class BrowserSession(Searchable, FindElementsMixin, AbstractContextManager, Scre
         self.base_url = base_url
         # setup logging
         self._log_path = log_path
-        self.logger = logging.getLogger(f'{__name__}.{self.browser_name}')
+        self.logger = logging.getLogger(f"{__name__}.{self.browser_name}")
         self._setup_logger(log_level)
 
     def _setup_logger(self, level):
@@ -108,10 +119,10 @@ class BrowserSession(Searchable, FindElementsMixin, AbstractContextManager, Scre
             return
         os.makedirs(self._log_path, exist_ok=True)
         file_handler = TimedRotatingFileHandler(
-            f'{self._log_path}/{self.browser_name}.log',
+            f"{self._log_path}/{self.browser_name}.log",
             backupCount=2,
             utc=True,
-            when='D'
+            when="D",
         )
         file_handler.setLevel(logging.DEBUG)
         fmt = logging.Formatter(LOG_FMT)
@@ -122,8 +133,8 @@ class BrowserSession(Searchable, FindElementsMixin, AbstractContextManager, Scre
     def log_path(self):
         return self._log_path
 
-    def setup_browser(self, browser: str, remote=False, headless=False,
-                      options: Union[ChromeOptions, FirefoxOptions, IeOptions] = None,
+    def setup_browser(self, browser: str, remote=False,
+                      options: ChromeOptions | FirefoxOptions | IeOptions = None,
                       desired_capabilities: DesiredCapabilities = None,
                       **other_options):
         """Configure browser to be used
@@ -151,7 +162,7 @@ class BrowserSession(Searchable, FindElementsMixin, AbstractContextManager, Scre
         """Start new browser instance"""
         if self._actual is not None:
             return
-        self.logger.debug('Starting %s ', self.browser_name)
+        self.logger.debug("Starting %s ", self.browser_name)
         browser_cls = _BROWSER_MAPPING[self.browser_name]
         if browser_cls is Remote:
             self._actual = Remote(desired_capabilities=self.desired_capabilities, options=self.options,
@@ -163,13 +174,13 @@ class BrowserSession(Searchable, FindElementsMixin, AbstractContextManager, Scre
 
     def set_driver(self, webdriver: Remote):
         """Override lazy driver initialization with already initialized webdriver"""
-        self.logger.debug('Set driver to %s ', webdriver)
+        self.logger.debug("Set driver to %s ", webdriver)
         if self._actual is not None:
-            self.logger.debug('Driver already running, quit first')
+            self.logger.debug("Driver already running, quit first")
             self._actual.quit()
         self._actual = webdriver
 
-    def open(self, url: str):
+    def open(self, url: str):  # noqa: A003
         """Open given URL"""
         self.__init_browser()
 
@@ -197,19 +208,17 @@ class BrowserSession(Searchable, FindElementsMixin, AbstractContextManager, Scre
 
     def close_window(self):
         """Close current browser window"""
-        self.logger.debug('Closing current browser window')
+        self.logger.debug("Closing current browser window")
         self._check_running()
         self._actual.close()
 
     def __exit__(self, exc_type, exc_value, traceback):
-        try:
+        with contextlib.suppress(NoBrowserException):
             self.close_window()
-        except NoBrowserException:
-            pass
 
     def close_all_windows(self):
         """Close all browser windows"""
-        self.logger.debug('Closing current all browser windows and quitting')
+        self.logger.debug("Closing current all browser windows and quitting")
 
         if self._actual is not None:
             self._actual.quit()

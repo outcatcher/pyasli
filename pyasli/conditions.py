@@ -2,7 +2,6 @@
 
 from pyasli.elements.elements import Element, ElementCondition
 
-
 # pylint: disable=invalid-name
 
 def __visible(element: Element) -> bool:

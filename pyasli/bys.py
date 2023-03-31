@@ -1,9 +1,9 @@
 """Locator techniques"""
-from typing import Tuple, Union
+from typing import Union
 
 from selenium.webdriver.common.by import By
 
-ByLocator = Tuple[str, str]
+ByLocator = tuple[str, str]
 
 CssSelectorOrBy = Union[str, ByLocator]
 
