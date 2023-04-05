@@ -17,7 +17,7 @@ jobs:
           cache: "poetry"
       - name: Install dependencies
         run: |
-          poetry install
+          poetry install --with dev
       - name: Run Pylint
         run: |
           poetry run ruff pyasli
@@ -46,7 +46,7 @@ jobs:
           aerokube/selenoid:latest-release
       - name: Install dependencies
         run: |
-          poetry install
+          poetry install --with dev
       - name: Run tests
         env:
           HOST: "localhost"
