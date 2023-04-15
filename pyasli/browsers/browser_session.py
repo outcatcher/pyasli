@@ -6,6 +6,7 @@ import contextlib
 import logging
 import os
 import re
+import warnings
 from contextlib import AbstractContextManager
 from logging.handlers import TimedRotatingFileHandler
 from typing import TYPE_CHECKING, Any, NamedTuple
@@ -173,6 +174,8 @@ class BrowserSession(Searchable, FindElementsMixin, AbstractContextManager, Scre
 
     def set_driver(self, webdriver: Remote):
         """Override lazy driver initialization with already initialized webdriver"""
+        warnings.warn("To be deleted, target usage is not defined", DeprecationWarning)
+
         self.logger.debug("Set driver to %s ", webdriver)
         if self._actual is not None:
             self.logger.debug("Driver already running, quit first")

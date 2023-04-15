@@ -3,7 +3,7 @@ import os
 
 import pytest
 from selenium.common.exceptions import WebDriverException
-from selenium.webdriver import Chrome, ChromeOptions, Firefox, FirefoxOptions, Remote
+from selenium.webdriver import Chrome, ChromeOptions, Remote
 
 from pyasli.browsers.browser_session import NoBrowserException, URL
 from tests.conftest import browser_instance, skip_if_not_ci, tags
@@ -92,25 +92,6 @@ def test_url_ne_check(base_url, browser):
     url = "/disappearing_elements"
     browser.open(url)
     assert browser.url != f"{base_url}/.../{url}"
-
-
-@tags("firefox")
-def test_set_driver(base_url):
-    with browser_instance() as browser:
-        options = FirefoxOptions()
-        browser.set_driver(Firefox(options=options))
-        assert isinstance(browser._actual, Firefox)  # not lazy!
-        browser.open(base_url)
-
-
-@tags("firefox")
-def test_replace_driver(base_url):
-    with browser_instance() as browser:
-        browser.open(base_url)
-        options = FirefoxOptions()
-        browser.set_driver(Firefox(options=options))
-        assert isinstance(browser._actual, Firefox)  # not lazy!
-        browser.open(base_url)
 
 
 def test_no_base_url():
