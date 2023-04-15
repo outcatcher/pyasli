@@ -151,14 +151,14 @@ def _prepare_menu(browser):
 
 def test_enabled(_prepare_menu):
     enabled, disabled = _prepare_menu
-    assert enabled.enabled
-    assert not disabled.enabled
+    enabled.should_be(lambda e: e.enabled)
+    disabled.should_be(lambda e: not e.enabled)
 
 
 def test_disabled(_prepare_menu):
     enabled, disabled = _prepare_menu
-    assert disabled.disabled
-    assert not enabled.disabled
+    disabled.should_be(lambda e: e.disabled)
+    enabled.should_be(lambda e: not e.disabled)
 
 
 def test_ancestors(browser):
