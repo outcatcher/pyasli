@@ -4,10 +4,9 @@ import os
 import pytest
 from selenium.common.exceptions import WebDriverException
 from selenium.webdriver import Chrome, ChromeOptions, Firefox, FirefoxOptions, Remote
-from webdriver_manager.firefox import GeckoDriverManager
 
 from pyasli.browsers.browser_session import NoBrowserException, URL
-from tests.conftest import browser_instance, skip_if_ci, skip_if_not_ci, tags
+from tests.conftest import browser_instance, skip_if_not_ci, tags
 
 
 def test_open(base_url, single_time_browser):
@@ -51,7 +50,6 @@ def test_no_open_page(browser):
 
 
 @tags("chrome")
-@skip_if_ci
 def test_chrome(base_url):
     with browser_instance("chrome", base_url) as browser:
         browser.open("/disappearing_elements")
@@ -59,7 +57,6 @@ def test_chrome(base_url):
 
 
 @tags("firefox")
-@skip_if_ci
 def test_firefox(base_url):
     with browser_instance("firefox", base_url) as browser:
         browser.open("/disappearing_elements")
@@ -98,24 +95,20 @@ def test_url_ne_check(base_url, browser):
 
 
 @tags("firefox")
-@skip_if_ci
 def test_set_driver(base_url):
     with browser_instance() as browser:
         options = FirefoxOptions()
-        options.headless = True
-        browser.set_driver(Firefox(options=options, executable_path=GeckoDriverManager().install()))
+        browser.set_driver(Firefox(options=options))
         assert isinstance(browser._actual, Firefox)  # not lazy!
         browser.open(base_url)
 
 
 @tags("firefox")
-@skip_if_ci
 def test_replace_driver(base_url):
     with browser_instance() as browser:
         browser.open(base_url)
         options = FirefoxOptions()
-        options.headless = True
-        browser.set_driver(Firefox(options=options, executable_path=GeckoDriverManager().install()))
+        browser.set_driver(Firefox(options=options))
         assert isinstance(browser._actual, Firefox)  # not lazy!
         browser.open(base_url)
 
