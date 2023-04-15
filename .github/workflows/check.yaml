@@ -24,6 +24,11 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
+    services:
+      the-internet:
+        image: "gprestes/the-internet:v2.6.5"
+        ports:
+          - 5000:5000
     steps:
       - uses: actions/checkout@v3
       - name: Install poetry
@@ -36,14 +41,12 @@ jobs:
       - name: Pull browser images
         run: |
           make pull-browsers
-      - name: Run selenoid
+      - name: Download and start Selenoid
         run: |
-          docker run -d                                   \
-          --name selenoid                                 \
-          -p 4444:4444                                    \
-          -v /var/run/docker.sock:/var/run/docker.sock    \
-          -v $(pwd)/.selenoid/:/etc/selenoid/:ro              \
-          aerokube/selenoid:latest-release
+          wget https://github.com/aerokube/selenoid/releases/download/1.10.10/selenoid_linux_amd64 -O selenoid
+          chmod +x selenoid
+          ./selenoid -version
+          ./selenoid -conf '.selenoid/browsers.json' -container-network "${{ job.services.the-internet.network }}" start &
       - name: Install dependencies
         run: |
           make install-dev
@@ -52,6 +55,8 @@ jobs:
           HOST: "localhost"
           BROWSER: "chrome"
           CI: "1"
+          TARGET_HOST: "the-internet"
+          TARGET_PORT: 5000
         run: |
           make test
       - name: Store test logs on failure

@@ -15,6 +15,10 @@ from pyasli.exceptions import NoBrowserException
 @pytest.fixture(scope="session")
 def base_url():
     """Return site test server base URL"""
+    if (target_port := os.getenv("TARGET_PORT")) and \
+            (target_host := os.getenv("TARGET_HOST")):
+        return f"http://{target_host}:{target_port}"
+
     return "https://the-internet.herokuapp.com"
 
 
