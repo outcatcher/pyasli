@@ -174,7 +174,7 @@ class BrowserSession(Searchable, FindElementsMixin, AbstractContextManager, Scre
 
     def set_driver(self, webdriver: Remote):
         """Override lazy driver initialization with already initialized webdriver"""
-        warnings.warn("To be deleted, target usage is not defined", DeprecationWarning)
+        warnings.warn("To be deleted, target usage is not defined", DeprecationWarning, stacklevel=2)
 
         self.logger.debug("Set driver to %s ", webdriver)
         if self._actual is not None:
