@@ -6,6 +6,7 @@ import contextlib
 import logging
 import os
 import re
+import warnings
 from contextlib import AbstractContextManager
 from logging.handlers import TimedRotatingFileHandler
 from typing import TYPE_CHECKING, Any, NamedTuple
@@ -142,7 +143,6 @@ class BrowserSession(Searchable, FindElementsMixin, AbstractContextManager, Scre
         :param str browser: Name of browser to be used
         :param bool remote: Is used browser running on remote host.
             In this case you should set `command_executor` argument to desired host value
-        :param bool headless: If `options` are not set, control `headless` option
         :param options: Browser options
         :param desired_capabilities: Browser desired capabilities
         :param other_options: Other options which will be passed to WebDriver constructor
@@ -153,7 +153,7 @@ class BrowserSession(Searchable, FindElementsMixin, AbstractContextManager, Scre
         else:
             self.browser_name = browser
             self.options = options
-        if options is None:
+        if self.options is None:
             self.options = _OPTIONS_MAPPING[browser]()
         self.desired_capabilities = desired_capabilities
         self._other_options = other_options
@@ -174,6 +174,8 @@ class BrowserSession(Searchable, FindElementsMixin, AbstractContextManager, Scre
 
     def set_driver(self, webdriver: Remote):
         """Override lazy driver initialization with already initialized webdriver"""
+        warnings.warn("To be deleted, target usage is not defined", DeprecationWarning, stacklevel=2)
+
         self.logger.debug("Set driver to %s ", webdriver)
         if self._actual is not None:
             self.logger.debug("Driver already running, quit first")
@@ -229,12 +231,10 @@ class BrowserSession(Searchable, FindElementsMixin, AbstractContextManager, Scre
         """Get current page URL"""
         return URL(self._actual.current_url, self.base_url)
 
-    def get_screenshot_as_png(self) -> bytes:
+    def capture_screenshot(self) -> bytes:
         """Capture whole browser page screenshot"""
         self.get_actual()
         return self._actual.get_screenshot_as_png()
-
-    capture_screenshot = get_screenshot_as_png
 
     def get_actual(self) -> WebDriver:
         """Get browser instance"""
