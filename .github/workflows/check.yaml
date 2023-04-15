@@ -1,6 +1,6 @@
 name: Check
 
-on: [push]
+on: [ push ]
 
 jobs:
 
@@ -17,10 +17,10 @@ jobs:
           cache: "poetry"
       - name: Install dependencies
         run: |
-          poetry install --with dev
+          make install-dev
       - name: Run Pylint
         run: |
-          poetry run ruff pyasli
+          make lint
 
   test:
     runs-on: ubuntu-latest
@@ -46,13 +46,19 @@ jobs:
           aerokube/selenoid:latest-release
       - name: Install dependencies
         run: |
-          poetry install --with dev
+          make install-dev
       - name: Run tests
         env:
           HOST: "localhost"
           BROWSER: "chrome"
           CI: "1"
         run: |
-          poetry run pytest -v --tb=line --cov-report xml --cov-config .coveragerc --cov pyasli tests
+          make test
+      - name: Store test logs on failure
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v3
+        with:
+          name: test-logs
+          path: ./logs
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
