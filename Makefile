@@ -7,6 +7,10 @@ ifeq "$(OS)" "Windows_NT"
 	VARSET=set HOST=$(HOST)&& set CI=$(CI)&&set BROWSER=$(BROWSER)&&
 endif
 
+pull-browsers:
+	docker pull selenoid/chrome:latest
+	docker pull selenoid/firefox:latest
+
 install-dev:
 	poetry install --with dev
 

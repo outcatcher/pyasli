@@ -1,3 +1,4 @@
+import logging
 import os
 import random
 import string
@@ -8,6 +9,7 @@ import requests
 
 from pyasli.browsers import BrowserSession
 from pyasli.elements.elements import Element
+from pyasli.exceptions import NoBrowserException
 
 
 @pytest.fixture(scope="session")
@@ -25,6 +27,19 @@ def browser(base_url):
     brw = browser_instance(base_url=base_url)
     yield brw
     brw.close_all_windows()
+
+
+def pytest_exception_interact(node, call, report):
+    """Pytest hook handling test exceptions"""
+    browser_fixture = browser.__name__
+
+    if report.failed and browser_fixture in node.fixturenames:
+        brw = node.funcargs[browser_fixture]
+        try:
+            logging.error(f"failed assertion at {node.name}")
+            brw.capture_screenshot_and_save(node.name + "_")  # adding test name to screenshot name
+        except NoBrowserException:
+            pass
 
 
 def in_ci():

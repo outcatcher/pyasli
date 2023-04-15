@@ -38,9 +38,9 @@ jobs:
         with:
           python-version: "3.10"
           cache: "poetry"
-      - name: Pull chrome image
+      - name: Pull browser images
         run: |
-          docker pull selenoid/chrome:latest
+          make pull-browsers
       - name: Download and start Selenoid
         run: |
           wget https://github.com/aerokube/selenoid/releases/download/1.10.10/selenoid_linux_amd64 -O selenoid

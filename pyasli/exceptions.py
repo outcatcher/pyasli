@@ -18,14 +18,6 @@ class NoBrowserException(WebDriverException):
     """No operable browser is open"""
 
 
-def _save_screenshot(data: bytes, dir_path="./logs") -> str:
-    os.makedirs(dir_path, exist_ok=True)
-    img_path = os.path.abspath(f"{dir_path}/{uuid.uuid4()}.png")
-    with open(img_path, "wb+") as out:
-        out.write(data)
-    return img_path
-
-
 class Screenshotable(abc.ABC):
     """Object instance provide screenshot functionality"""
 
@@ -35,6 +27,18 @@ class Screenshotable(abc.ABC):
 
     @abc.abstractmethod
     def capture_screenshot(self) -> bytes: ...
+
+    def capture_screenshot_and_save(self, prefix="") -> str:
+        """Capture whole browser page screenshot and save it to log dir"""
+        png_data = self.capture_screenshot()
+
+        os.makedirs(self.log_path, exist_ok=True)
+        img_path = os.path.abspath(f"{self.log_path}/{prefix}{uuid.uuid4()}.png")
+
+        with open(img_path, "wb+") as out:
+            out.write(png_data)
+
+        return img_path
 
 
 @wrapt.decorator
@@ -52,9 +56,9 @@ def screenshot_on_fail(wrapped, instance: Screenshotable = None, args=None, kwar
             raise sc_e
 
         try:
-            img_path = _save_screenshot(instance.capture_screenshot(), instance.log_path)
+            img_path = instance.capture_screenshot_and_save()
             LOGGER.exception("Screenshot captured on failure: %s", img_path)
         except NoBrowserException:
             pass
 
-        raise sc_e #
+        raise sc_e
