@@ -1,4 +1,5 @@
 """Browser wrapper implementation"""
 
-from .browser_session import BrowserSession
-from .shared_browser import browser, set_browser
+# Those imports are here to simplify access
+from .browser_session import BrowserSession  # noqa: F401
+from .shared_browser import browser, set_browser  # noqa: F401

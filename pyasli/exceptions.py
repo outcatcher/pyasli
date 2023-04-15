@@ -46,9 +46,9 @@ def screenshot_on_fail(wrapped, instance: Screenshotable = None, args=None, kwar
     try:
         return wrapped(*args, **kwargs)
     except (WebDriverException, AssertionError, TimeoutError) as sc_e:
-        if not hasattr(instance, 'capture_screenshot'):
-            warnings.warn(f'`capture_screenshot` method is missing for {instance}.'
-                          'No screenshot can be captured')
+        if not hasattr(instance, "capture_screenshot"):
+            warnings.warn(f"`capture_screenshot` method is missing for {instance}."
+                          "No screenshot can be captured", stacklevel=2)
             raise sc_e
 
         try:
@@ -57,4 +57,4 @@ def screenshot_on_fail(wrapped, instance: Screenshotable = None, args=None, kwar
         except NoBrowserException:
             pass
 
-        raise sc_e
+        raise sc_e #

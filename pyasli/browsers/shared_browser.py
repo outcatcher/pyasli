@@ -20,7 +20,7 @@ class _BrowserState:
 
 def set_browser(browser_name: str):
     """Set shared browser. More precise configuration can be reached with `browser.setup_browser`"""
-    LOGGER.debug('Set shared browser to %s', browser_name)
+    LOGGER.debug("Set shared browser to %s", browser_name)
     if browser_name != _BrowserState.browser_name:
         browser.close_all_windows()
         _BrowserState.browser_name = browser_name

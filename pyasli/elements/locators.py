@@ -1,6 +1,7 @@
 """Lazy locator wrappers"""
 from abc import ABC, abstractmethod
-from typing import Any, Callable, List, Union
+from collections.abc import Callable
+from typing import Any
 from weakref import proxy
 
 from selenium.common.exceptions import NoSuchElementException, StaleElementReferenceException
@@ -8,14 +9,13 @@ from selenium.webdriver.remote.webelement import WebElement
 
 from pyasli.elements.searchable import LocatorStrategy, Searchable
 
-
 # pylint: disable=protected-access
 
 
-def _search_in_context(context: Searchable, method: str, by: tuple, _retry=True) -> List[WebElement]:
+def _search_in_context(context: Searchable, method: str, by: tuple, _retry=True) -> list[WebElement]:
     actual = context.get_actual()
     if not isinstance(actual, list):
-        actual: List[WebElement] = [actual]
+        actual: list[WebElement] = [actual]
     result = []
     for elem in actual:
         if elem is None:
@@ -25,7 +25,7 @@ def _search_in_context(context: Searchable, method: str, by: tuple, _retry=True)
             found = getattr(elem, method)(*by)
         except StaleElementReferenceException:  # element in which we search can be stale itself
             context.__cached__ = None
-            found = _search_in_context(context, method, by, False)
+            found = _search_in_context(context, method, by, _retry=False)
         except NoSuchElementException:
             continue
         if isinstance(found, list):
@@ -47,19 +47,19 @@ class SingleElementLocator(LocatorStrategy):
 
     def __repr__(self):
         # recursive repr
-        return f"{repr(self.context._locator)} -> {self.by}"
+        return f"{repr(self.context.locator)} -> {self.by}"
 
 
 class MultipleElementLocator(LocatorStrategy):
     """Locator strategy for multiple elements"""
 
-    def get(self) -> List[WebElement]:
+    def get(self) -> list[WebElement]:
         """Get list of matching web elements"""
         return _search_in_context(self.context, "find_elements", self.by)
 
     def __repr__(self):
         # recursive repr
-        return f"{repr(self.context._locator)} -> [{self.by}]"
+        return f"{repr(self.context.locator)} -> [{self.by}]"
 
 
 # SUB ELEMENTS
@@ -67,12 +67,12 @@ class MultipleElementLocator(LocatorStrategy):
 class SubElementLocator(LocatorStrategy):
     """Locator for elements extracted from element list"""
 
-    def __init__(self, whole: MultipleElementLocator, sub: Union[slice, int]):
+    def __init__(self, whole: MultipleElementLocator, sub: slice | int):
         super().__init__(whole.by, whole.context)
         self._whole = whole
         self._sub = sub
 
-    def get(self) -> List[WebElement]:
+    def get(self) -> list[WebElement]:
         """Get slice from element collection (not going deeper)"""
         elements = self._whole.get()
         return elements[self._sub]
@@ -113,7 +113,7 @@ class ConditionLocator(LocatorStrategy, ABC):
     _condition: Callable[[Any], bool]
 
     def __init__(self, collection, condition: Callable[[Any], bool]):
-        self._whole = proxy(collection._locator)
+        self._whole = proxy(collection.locator)
         super().__init__(self._whole.by, self._whole.context)
         self._collection = collection
         self._condition = condition
@@ -125,7 +125,7 @@ class ConditionLocator(LocatorStrategy, ABC):
     def __repr__(self):
         return f"{self._whole.__repr__()}.{self._word}({self._condition.__name__})"
 
-    def get(self) -> List[WebElement]:
+    def get(self) -> list[WebElement]:
         """Get only web elements matching condition"""
         raise NotImplementedError
 
@@ -137,10 +137,9 @@ class FilteredCollectionLocator(ConditionLocator, MultipleElementLocator):
     def _word(self):
         return "filter"
 
-    def get(self) -> List[WebElement]:
+    def get(self) -> list[WebElement]:
         """Get only web elements matching condition"""
-        filtered = [elem.get_actual() for elem in self._collection if self._condition(elem)]
-        return filtered
+        return [elem.get_actual() for elem in self._collection if self._condition(elem)]
 
 
 class FindElementLocator(ConditionLocator, SingleElementLocator):
